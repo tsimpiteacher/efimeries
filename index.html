@@ -263,6 +263,25 @@
     <div class="parse-status" id="sessionStatus"></div>
   </div>
 
+  <div class="card" id="persistCard">
+    <h2>Μόνιμες ρυθμίσεις</h2>
+    <p class="sub">Όλοι οι περιορισμοί σου (εξαιρέσεις, μάχιμοι, λιγότερες εφημερίες, όρια ημερών, εξαιρέσεις ανά ημέρα, θέσεις, ώρες βαρδιών, υποσημείωση, βάση στατιστικών) <b>αποθηκεύονται αυτόματα σε αυτή τη συσκευή</b> και μένουν ίδιοι σε κάθε νέο πρόγραμμα που ανεβάζεις, μέχρι να τους αλλάξεις εσύ.</p>
+    <div class="parse-status" id="persistInfo"></div>
+    <div id="resetIdle" style="margin-top:10px;">
+      <button class="btn btn-ghost" id="resetBtn" type="button">Επαναφορά όλων στις προεπιλογές…</button>
+    </div>
+    <div id="resetConfirm" hidden style="margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2);">
+      <div style="font-size:13.5px; font-weight:600; margin-bottom:6px;">Σίγουρα; Θα διαγραφούν όλοι οι αποθηκευμένοι περιορισμοί και θα καθαρίσει το τρέχον πρόγραμμα.</div>
+      <label style="display:flex; gap:8px; align-items:center; font-size:13px; margin-bottom:10px; cursor:pointer;">
+        <input type="checkbox" id="resetHistoryChk"> Διαγραφή και του ιστορικού στατιστικών
+      </label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="resetYesBtn" type="button">Ναι, επαναφορά όλων</button>
+        <button class="btn btn-ghost" id="resetNoBtn" type="button">Άκυρο</button>
+      </div>
+    </div>
+  </div>
+
   <div class="card" id="settingsCard" hidden>
     <h2><span class="step-no">2</span>Ρυθμίσεις εφημερίας</h2>
     <p class="sub">Οι κανόνες: 1η βάρδια = μη κενό κελί στην 1η ώρα εκείνης της ημέρας· 2η βάρδια = μη κενό κελί στην 6η ώρα. Προσαρμόζεις ό,τι χρειάζεται πριν την τοποθέτηση.</p>
@@ -889,7 +908,7 @@ async function buildDocxBytes(model) {
    APP STATE + UI
    ============================================================ */
 
-const DEFAULT_EXCLUSIONS = ['ΜΑΡΑΒΕΛΙΑ', 'ΣΤΑΣΙΝΟΥΛΙΑ', 'ΤΣΙΜΠΙΝΟΣ', 'ΜΠΙΡΗΣ', 'ΓΕΩΡΓΙΟΥ', 'ΧΛΟΠΤΣΙΔΟΥ', 'ΙΕΡΟΜΝΗΜΩΝ', 'ΜΠΟΥΚΟΥΒΑΛΑ', 'ΚΑΡΥΔΙΑΝΑΚΗΣ'];
+const DEFAULT_EXCLUSIONS = [];
 const DEFAULT_FOOTNOTE =
   '*Πρώτα μοιράζονται ισόποσα οι εφημερίες της εβδομάδας σε όλους τους εκπαιδευτικούς, και μετά τοποθετούνται όσο γίνεται στη θέση που ταιριάζει με την αίθουσα διδασκαλίας τους εκείνη την ώρα\n' +
   '-στο ισόγειο (3 άτομα):\n' +
@@ -1036,7 +1055,7 @@ function renderMaxDays() {
   const sel = 'font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink);';
   const rows = Object.keys(state.maxDays).sort((a, b) => a.localeCompare(b, 'el')).map(n => {
     let o = '';
-    for (let k = 1; k <= nDays; k++) o += '<option value="' + k + '"' + (state.maxDays[n] === k ? ' selected' : '') + '>' + k + (k === 1 ? ' ημέρα' : ' ημέρες') + '</option>';
+    for (let k = 1; k <= Math.max(nDays, state.maxDays[n] || 0); k++) o += '<option value="' + k + '"' + (state.maxDays[n] === k ? ' selected' : '') + '>' + k + (k === 1 ? ' ημέρα' : ' ημέρες') + '</option>';
     return '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0;">' +
       '<span style="flex:1; min-width:140px; font-size:13px;">' + escapeAttr(n) + '</span>' +
       '<select class="md-val" data-name="' + escapeAttr(n) + '" style="' + sel + '">' + o + '</select>' +
@@ -1669,12 +1688,10 @@ function handleFile(file) {
       $('schoolInput').value = state.school;
       $('dateInput').value = state.dateLabel;
       state.dayTimes = {};
-      model.days.forEach(d => { state.dayTimes[d] = defaultTimeFor(d); });
+      model.days.forEach(d => { state.dayTimes[d] = Object.assign(defaultTimeFor(d), customDayTimes[d] || {}); });
       state.assignments = {};
-      state.dayExclusions = {};
-      state.lightLoad = state.lightLoad.filter(n => model.teachers.some(t => t.name === n));
-      state.combat = state.combat.filter(n => model.teachers.some(t => t.name === n));
-      Object.keys(state.maxDays).forEach(n => { if (!model.teachers.some(t => t.name === n)) delete state.maxDays[n]; });
+      // Οι περιορισμοί (μάχιμοι, λιγότερες εφημερίες, όρια ημερών, εξαιρέσεις ημέρας) ΜΕΝΟΥΝ
+      // ίδιοι μέχρι να τους αλλάξει ο χρήστης — δεν καθαρίζονται σε νέο πρόγραμμα.
       runAssignmentsForAllDays();
 
       $('dzSub').textContent = 'Επιτυχής ανάλυση — μπορείς να ανεβάσεις άλλο αρχείο όποτε θες';
@@ -2108,6 +2125,182 @@ $('histImportInput').addEventListener('change', ev => {
   };
   reader.readAsText(file);
 });
+
+
+/* ---------- μόνιμες ρυθμίσεις (αυτόματη αποθήκευση + επαναφορά) ---------- */
+
+const SETTINGS_KEY = 'efimeries-settings-v1';
+const DEFAULT_POSITIONS = JSON.parse(JSON.stringify(state.positions));
+const INITIAL_RESULTS_HTML = $('results').innerHTML;
+const INITIAL_DZ_MAIN = $('dzMain').textContent;
+const INITIAL_DZ_SUB = $('dzSub').textContent;
+let customDayTimes = {};      // dayName -> {a,b} μόνο όταν διαφέρουν από τις προεπιλεγμένες
+let settingsLastJson = '';
+let settingsMemory = false;   // true όταν ο browser δεν επιτρέπει αποθήκευση
+let settingsFrozen = false;
+
+function settingsSnapshot() {
+  Object.keys(state.dayTimes || {}).forEach(d => {
+    const def = defaultTimeFor(d), cur = state.dayTimes[d] || def;
+    if (cur.a !== def.a || cur.b !== def.b) customDayTimes[d] = { a: cur.a, b: cur.b };
+    else delete customDayTimes[d];
+  });
+  return {
+    v: 1,
+    school: state.school,
+    includeEAE: state.includeEAE,
+    avoidDoubleShift: state.avoidDoubleShift,
+    exclusions: state.exclusions,
+    maxDays: state.maxDays,
+    combat: state.combat,
+    lightLoad: state.lightLoad,
+    dayExclusions: state.dayExclusions,
+    positions: state.positions,
+    dayTimes: customDayTimes,
+    footnote: state.footnote,
+    priorCounts: state.priorCounts ? Object.fromEntries(state.priorCounts) : null,
+    priorMeta: state.priorMeta || null,
+  };
+}
+
+function applySettings(d) {
+  const strArr = a => Array.isArray(a) ? a.filter(x => typeof x === 'string') : null;
+  if (typeof d.school === 'string') state.school = d.school;
+  if (typeof d.includeEAE === 'boolean') state.includeEAE = d.includeEAE;
+  if (typeof d.avoidDoubleShift === 'boolean') state.avoidDoubleShift = d.avoidDoubleShift;
+  if (strArr(d.exclusions)) state.exclusions = strArr(d.exclusions);
+  if (strArr(d.combat)) state.combat = strArr(d.combat);
+  if (strArr(d.lightLoad)) state.lightLoad = strArr(d.lightLoad);
+  if (d.maxDays && typeof d.maxDays === 'object') {
+    state.maxDays = {};
+    Object.keys(d.maxDays).forEach(n => { const v = parseInt(d.maxDays[n], 10); if (v >= 1) state.maxDays[n] = v; });
+  }
+  if (d.dayExclusions && typeof d.dayExclusions === 'object') {
+    state.dayExclusions = {};
+    Object.keys(d.dayExclusions).forEach(day => { const a = strArr(d.dayExclusions[day]); if (a && a.length) state.dayExclusions[day] = a; });
+  }
+  if (Array.isArray(d.positions) && d.positions.length === DEFAULT_POSITIONS.length &&
+      d.positions.every(p => p && typeof p.label === 'string' && Number.isFinite(+p.countA) && Number.isFinite(+p.countB))) {
+    state.positions = d.positions.map(p => ({ label: p.label, countA: Math.max(0, +p.countA), countB: Math.max(0, +p.countB) }));
+  }
+  if (typeof d.footnote === 'string') state.footnote = d.footnote;
+  if (d.dayTimes && typeof d.dayTimes === 'object') {
+    customDayTimes = {};
+    Object.keys(d.dayTimes).forEach(day => {
+      const t = d.dayTimes[day];
+      if (t && typeof t.a === 'string' && typeof t.b === 'string') customDayTimes[day] = { a: t.a, b: t.b };
+    });
+  }
+  if (d.priorCounts && typeof d.priorCounts === 'object') {
+    state.priorCounts = new Map(Object.entries(d.priorCounts).map(([k, v]) => [k, Number(v) || 0]));
+    state.priorMeta = d.priorMeta || null;
+  }
+}
+
+function loadSettings() {
+  let raw = null;
+  try { raw = localStorage.getItem(SETTINGS_KEY); } catch (e) { raw = null; }
+  if (!raw) return false;
+  try { const d = JSON.parse(raw); if (d && typeof d === 'object') { applySettings(d); return true; } } catch (e) { /* αγνόησε φθαρμένα δεδομένα */ }
+  return false;
+}
+
+function persistSettings(force) {
+  if (settingsFrozen) return;
+  let json;
+  try { json = JSON.stringify(settingsSnapshot()); } catch (e) { return; }
+  if (json === settingsLastJson && !force) return;
+  settingsLastJson = json;
+  try { localStorage.setItem(SETTINGS_KEY, json); settingsMemory = false; } catch (e) { settingsMemory = true; }
+  renderPersistInfo();
+}
+
+function renderPersistInfo() {
+  const el = $('persistInfo');
+  if (!el) return;
+  const dx = Object.keys(state.dayExclusions).reduce((a, k) => a + state.dayExclusions[k].length, 0);
+  const parts = [
+    ['Εξαιρέσεις', state.exclusions.length],
+    ['Μάχιμοι', state.combat.length],
+    ['Λιγότερες εφημερίες', state.lightLoad.length],
+    ['Όρια ημερών', Object.keys(state.maxDays).length],
+    ['Εξαιρέσεις ημέρας', dx],
+  ];
+  el.innerHTML = '<div class="ok">✓ Αποθηκευμένα: ' + parts.map(p => p[0] + ' ' + p[1]).join(' · ') +
+    (state.priorCounts ? ' · Βάση στατιστικών ενεργή' : '') + '</div>' +
+    (settingsMemory ? '<div class="warnbox" style="margin-top:6px;">⚠ Ο browser δεν επιτρέπει μόνιμη αποθήκευση — οι ρυθμίσεις θα χαθούν όταν κλείσεις τη σελίδα. Χρησιμοποίησε «Αποθήκευση επεξεργασίας».</div>' : '');
+}
+
+function resetEverything(alsoHistory) {
+  settingsFrozen = true;
+  try { localStorage.removeItem(SETTINGS_KEY); } catch (e) { /* αγνόησε */ }
+  if (alsoHistory) {
+    try { localStorage.removeItem(HISTORY_KEY); } catch (e) { /* αγνόησε */ }
+    historyMemory = null;
+  }
+  state.model = null;
+  state.school = '';
+  state.dateLabel = '';
+  state.includeEAE = false;
+  state.avoidDoubleShift = true;
+  state.exclusions = DEFAULT_EXCLUSIONS.slice();
+  state.maxDays = {};
+  state.combat = [];
+  state.lightLoad = [];
+  state.dayExclusions = {};
+  state.positions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
+  state.dayTimes = {};
+  state.assignments = {};
+  state.footnote = DEFAULT_FOOTNOTE;
+  state.priorCounts = null;
+  state.priorMeta = null;
+  customDayTimes = {};
+  ['settingsCard', 'footnoteCard', 'statsCard', 'actionbar'].forEach(id => { $(id).hidden = true; });
+  $('results').innerHTML = INITIAL_RESULTS_HTML;
+  $('dzMain').textContent = INITIAL_DZ_MAIN;
+  $('dzSub').textContent = INITIAL_DZ_SUB;
+  $('parseStatus').innerHTML = '';
+  $('sessionStatus').innerHTML = '';
+  $('historyView').innerHTML = '';
+  ['fileInput', 'sessionInput'].forEach(id => { const i = $(id); if (i) i.value = ''; });
+  $('schoolInput').value = '';
+  $('dateInput').value = '';
+  $('exclusionInput').value = state.exclusions.join('\n');
+  $('footnote').value = state.footnote;
+  setSwitch('eaeSwitch', state.includeEAE);
+  setSwitch('dblSwitch', state.avoidDoubleShift);
+  renderPosTable();
+  renderPriorStatsStatus();
+  renderHistory();
+  setHistoryStatus('');
+  settingsLastJson = JSON.stringify(settingsSnapshot());
+  settingsFrozen = false;
+  renderPersistInfo();
+}
+
+$('resetBtn').addEventListener('click', () => { $('resetIdle').hidden = true; $('resetConfirm').hidden = false; });
+$('resetNoBtn').addEventListener('click', () => { $('resetConfirm').hidden = true; $('resetIdle').hidden = false; $('resetHistoryChk').checked = false; });
+$('resetYesBtn').addEventListener('click', () => {
+  const withHistory = $('resetHistoryChk').checked;
+  resetEverything(withHistory);
+  $('resetConfirm').hidden = true; $('resetIdle').hidden = false; $('resetHistoryChk').checked = false;
+  $('persistInfo').insertAdjacentHTML('beforeend', '<div class="ok" style="margin-top:6px;">✓ Έγινε επαναφορά όλων' + (withHistory ? ' (και του ιστορικού)' : '') + '.</div>');
+});
+
+if (loadSettings()) {
+  $('schoolInput').value = state.school;
+  $('exclusionInput').value = state.exclusions.join('\n');
+  $('footnote').value = state.footnote;
+  setSwitch('eaeSwitch', state.includeEAE);
+  setSwitch('dblSwitch', state.avoidDoubleShift);
+  renderPosTable();
+  renderPriorStatsStatus();
+}
+settingsLastJson = JSON.stringify(settingsSnapshot());
+renderPersistInfo();
+setInterval(() => persistSettings(false), 700);
+document.addEventListener('visibilitychange', () => persistSettings(false));
+window.addEventListener('pagehide', () => persistSettings(false));
 
 renderHistory();
 
