@@ -1,0 +1,2125 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2F5D3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Εφημερίες">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Πίνακας Εφημεριών</title>
+</head>
+<body>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#EEF1EE; --surface:#FFFFFF; --surface-2:#E3E9E1;
+    --ink:#1E2420; --ink-muted:#5C6660; --line:#C7D0C5; --line-soft:#DAE2D8;
+    --accent:#2F5D3A; --accent-ink:#FFFFFF; --accent-soft:#D9E6DA; --accent-soft-ink:#1E402A;
+    --accent2:#8A501B; --accent2-soft:#EFDCC3; --accent2-soft-ink:#5C3710;
+    --warn:#9A2F1C; --warn-soft:#F4DAD2;
+    --shadow: 0 1px 2px rgba(20,26,18,.06), 0 6px 18px rgba(20,26,18,.07);
+    --radius: 12px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#13160F; --surface:#1B2016; --surface-2:#232A1D;
+      --ink:#EAEFE6; --ink-muted:#A7B3A2; --line:#333C2C; --line-soft:#2A3324;
+      --accent:#84C592; --accent-ink:#0E1710; --accent-soft:#233221; --accent-soft-ink:#B9E3C1;
+      --accent2:#E0A868; --accent2-soft:#3A2A16; --accent2-soft-ink:#F0CD9E;
+      --warn:#E48A72; --warn-soft:#3B1D16;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#13160F; --surface:#1B2016; --surface-2:#232A1D;
+    --ink:#EAEFE6; --ink-muted:#A7B3A2; --line:#333C2C; --line-soft:#2A3324;
+    --accent:#84C592; --accent-ink:#0E1710; --accent-soft:#233221; --accent-soft-ink:#B9E3C1;
+    --accent2:#E0A868; --accent2-soft:#3A2A16; --accent2-soft-ink:#F0CD9E;
+    --warn:#E48A72; --warn-soft:#3B1D16;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    padding-inline:20px; padding-block:32px 80px;
+  }
+  .wrap{max-width:1000px; margin:0 auto; display:flex; flex-direction:column; gap:28px;}
+
+  /* ---------- masthead ---------- */
+  .masthead{display:flex; flex-direction:column; gap:6px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:.11em;
+    text-transform:uppercase; color:var(--accent); font-weight:600;
+  }
+  h1{
+    font-family:'Archivo', system-ui, sans-serif; font-weight:800; font-size:clamp(28px,4.4vw,40px);
+    line-height:1.05; margin:2px 0 0; text-wrap:balance; letter-spacing:-.01em;
+  }
+  .lede{color:var(--ink-muted); font-size:15.5px; max-width:62ch; line-height:1.55; margin:2px 0 0;}
+
+  /* ---------- generic card ---------- */
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:22px 24px;
+  }
+  .card h2{
+    font-family:'Archivo', system-ui, sans-serif; font-size:16.5px; font-weight:700;
+    margin:0 0 4px; letter-spacing:-.005em;
+  }
+  .card .sub{color:var(--ink-muted); font-size:13.5px; margin:0 0 16px; line-height:1.5;}
+  .step-no{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px;
+    border-radius:50%; background:var(--accent-soft); color:var(--accent-soft-ink);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; margin-right:8px; flex:none;
+  }
+
+  /* ---------- upload ---------- */
+  .dropzone{
+    border:1.5px dashed var(--line); border-radius:10px; padding:22px;
+    display:flex; align-items:center; gap:14px; cursor:pointer; transition:border-color .15s, background .15s;
+    background:var(--bg);
+  }
+  .dropzone:hover, .dropzone.drag{border-color:var(--accent); background:var(--accent-soft);}
+  .dropzone svg{flex:none; color:var(--accent);}
+  .dropzone .dz-text b{display:block; font-size:14.5px;}
+  .dropzone .dz-text span{font-size:12.5px; color:var(--ink-muted);}
+  input[type="file"]{display:none;}
+  .parse-status{margin-top:14px; font-size:13.5px; display:flex; flex-direction:column; gap:6px;}
+  .parse-status .ok{color:var(--accent-soft-ink); background:var(--accent-soft); border-radius:8px; padding:9px 12px; display:flex; gap:8px; align-items:flex-start;}
+  .parse-status .err{color:var(--warn); background:var(--warn-soft); border-radius:8px; padding:9px 12px;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;}
+  .chip{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:var(--surface-2); border:1px solid var(--line-soft);
+    border-radius:999px; padding:3px 10px; color:var(--ink-muted);
+  }
+
+  /* ---------- form controls ---------- */
+  label.field{display:flex; flex-direction:column; gap:5px; font-size:13px;}
+  label.field .lbl{font-weight:600; color:var(--ink);}
+  input[type="text"], input[type="number"], textarea, select{
+    font:inherit; font-size:14px; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
+    background:var(--surface); color:var(--ink); width:100%;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus,
+  button:focus-visible, .dropzone:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  textarea{font-family:'IBM Plex Mono',monospace; font-size:13px; resize:vertical; line-height:1.6;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  @media (max-width:560px){.grid2{grid-template-columns:1fr;}}
+
+  .switch-row{display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-top:1px solid var(--line-soft);}
+  .switch-row:first-of-type{border-top:none; padding-top:2px;}
+  .switch{
+    position:relative; flex:none; width:38px; height:22px; border-radius:999px; background:var(--surface-2);
+    border:1px solid var(--line); cursor:pointer; transition:background .15s;
+  }
+  .switch.on{background:var(--accent); border-color:var(--accent);}
+  .switch .knob{
+    position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--surface);
+    transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.25);
+  }
+  .switch.on .knob{transform:translateX(16px); background:var(--accent-ink);}
+  .switch-copy b{display:block; font-size:13.5px;}
+  .switch-copy span{font-size:12.5px; color:var(--ink-muted); line-height:1.5;}
+
+  table.tpl{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.tpl th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-muted); font-weight:600; padding:0 8px 8px 0;}
+  table.tpl td{padding:5px 8px 5px 0; vertical-align:middle;}
+  table.tpl input[type="text"]{min-width:140px;}
+  table.tpl input[type="number"]{width:64px; text-align:center; font-variant-numeric:tabular-nums;}
+  .icon-btn{
+    background:none; border:1px solid var(--line); border-radius:7px; width:30px; height:30px;
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-muted); flex:none;
+  }
+  .icon-btn:hover{color:var(--warn); border-color:var(--warn);}
+  .link-btn{
+    background:none; border:none; color:var(--accent); font-weight:600; font-size:13px; cursor:pointer; padding:6px 0;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .link-btn:hover{text-decoration:underline;}
+
+  /* ---------- day boards ---------- */
+  #results{display:flex; flex-direction:column; gap:16px;}
+  .empty-state{
+    border:1px dashed var(--line); border-radius:var(--radius); padding:32px 24px; text-align:center;
+    color:var(--ink-muted); background:var(--surface);
+  }
+  .empty-state ol{list-style:none; margin:18px auto 0; padding:0; display:flex; flex-direction:column; gap:10px; max-width:360px; text-align:left;}
+  .empty-state li{display:flex; align-items:center; gap:10px; font-size:14px; color:var(--ink);}
+
+  .board{border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--surface); box-shadow:var(--shadow);}
+  .board-head{
+    background:var(--accent); color:var(--accent-ink); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .board-head .day{font-family:'Archivo',sans-serif; font-weight:800; font-size:17px; letter-spacing:.01em;}
+  .board-head .reshuffle{
+    background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); color:var(--accent-ink);
+    border-radius:7px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;
+  }
+  :root[data-theme="dark"] .board-head .reshuffle, :root:not([data-theme="light"]) .board-head .reshuffle{background:rgba(0,0,0,.22);}
+  .board-head .reshuffle:hover{background:rgba(255,255,255,.28);}
+  .board-body{display:grid; grid-template-columns:1fr 1fr; gap:0;}
+  @media (max-width:620px){.board-body{grid-template-columns:1fr;}}
+  .shift-col{padding:14px 16px;}
+  .shift-col + .shift-col{border-left:1px solid var(--line-soft);}
+  @media (max-width:620px){.shift-col + .shift-col{border-left:none; border-top:1px solid var(--line-soft);}}
+  .shift-head{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .shift-dot{width:9px; height:9px; border-radius:50%; flex:none;}
+  .shift-dot.a{background:var(--accent);}
+  .shift-dot.b{background:var(--accent2);}
+  .shift-head b{font-size:12.5px; text-transform:uppercase; letter-spacing:.05em;}
+  .shift-head input.time{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; border:1px solid transparent; background:transparent;
+    color:var(--ink-muted); width:110px; padding:2px 4px; border-radius:5px;
+  }
+  .shift-head input.time:hover, .shift-head input.time:focus{border-color:var(--line); background:var(--surface);}
+  .pos-row{display:grid; grid-template-columns:112px 1fr; gap:8px; align-items:center; padding:5px 0;}
+  .pos-row .pos-label{font-size:12px; font-weight:600; color:var(--ink-muted); line-height:1.3;}
+  .pos-row input[type="text"]{font-size:13.5px; padding:7px 9px;}
+  .leftover{margin-top:10px; font-size:11.5px; color:var(--ink-muted); line-height:1.5;}
+  .leftover b{color:var(--ink);}
+  .short-warn{margin-top:8px; font-size:11.5px; color:var(--warn); background:var(--warn-soft); border-radius:6px; padding:6px 9px;}
+
+  /* ---------- footnote ---------- */
+  #footnote{min-height:160px;}
+
+  /* ---------- stats & error check ---------- */
+  .parse-status .warnbox{
+    color:var(--accent2-soft-ink); background:var(--accent2-soft); border-radius:8px; padding:9px 12px;
+    display:flex; gap:8px; align-items:flex-start;
+  }
+  .issue-row{font-size:12.5px; padding:7px 11px; border-radius:7px; margin-bottom:6px; line-height:1.5;}
+  .issue-row.error{background:var(--warn-soft); color:var(--warn);}
+  .issue-row.warn{background:var(--accent2-soft); color:var(--accent2-soft-ink);}
+  #statsTable td{vertical-align:middle;}
+  .stat-bar{background:var(--surface-2); border-radius:5px; height:9px; width:100%; min-width:80px; overflow:hidden;}
+  .stat-bar-fill{background:var(--accent); height:100%; border-radius:5px;}
+  .stat-count{font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; text-align:center; font-weight:600;}
+  .stat-zero{color:var(--ink-muted); font-style:italic;}
+
+  /* ---------- action bar ---------- */
+  .actionbar{
+    position:sticky; bottom:16px; display:flex; align-items:center; gap:12px; justify-content:space-between;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 18px; flex-wrap:wrap;
+  }
+  .actionbar .status{font-size:13px; color:var(--ink-muted); flex:1; min-width:180px;}
+  .btn{
+    font:inherit; font-weight:700; font-size:14px; border-radius:9px; padding:11px 18px; cursor:pointer;
+    border:1px solid transparent; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+  }
+  .btn-primary{background:var(--accent); color:var(--accent-ink);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-primary:disabled{opacity:.5; cursor:not-allowed;}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  @media (max-width:620px){ .btn{white-space:normal; text-align:left; max-width:100%;} }
+
+  footer.note{font-size:12px; color:var(--ink-muted); text-align:center; line-height:1.6;}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Σχολική διαχείριση · εβδομαδιαίο πρόγραμμα → εφημερίες</div>
+    <h1>Πίνακας Εφημεριών</h1>
+    <p class="lede">Ανέβασε το εβδομαδιαίο ωρολόγιο πρόγραμμα (.xlsx) και το εργαλείο υπολογίζει ποιοι εκπαιδευτικοί μπορούν να μπουν σε 1η ή 2η βάρδια, τους τοποθετεί σε θέσεις εφημερίας ανά ημέρα, και παράγει έτοιμο έγγραφο Word για λήψη.</p>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-no">1</span>Πρόγραμμα εβδομάδας</h2>
+    <p class="sub">Το αρχείο .xlsx πρέπει να έχει τη γνωστή μορφή: στήλες «Εκπαιδευτικός» / «Ειδικότητα», έπειτα 5 ημέρες με 7 ώρες η καθεμία. Δεν αποθηκεύεται πουθενά — η επεξεργασία γίνεται μόνο στον browser σου.</p>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Ανέβασμα αρχείου Excel">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+      <div class="dz-text">
+        <b id="dzMain">Επίλεξε ή σύρε εδώ το αρχείο προγράμματος (.xlsx)</b>
+        <span id="dzSub">Θα αναλυθεί αυτόματα μόλις φορτωθεί</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls">
+    <div class="parse-status" id="parseStatus"></div>
+    <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <label class="btn btn-ghost" style="cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+        Φόρτωση αποθηκευμένης επεξεργασίας
+        <input type="file" id="sessionInput" accept=".json,application/json" style="display:none;">
+      </label>
+    </div>
+    <div class="parse-status" id="sessionStatus"></div>
+  </div>
+
+  <div class="card" id="settingsCard" hidden>
+    <h2><span class="step-no">2</span>Ρυθμίσεις εφημερίας</h2>
+    <p class="sub">Οι κανόνες: 1η βάρδια = μη κενό κελί στην 1η ώρα εκείνης της ημέρας· 2η βάρδια = μη κενό κελί στην 6η ώρα. Προσαρμόζεις ό,τι χρειάζεται πριν την τοποθέτηση.</p>
+
+    <div class="grid2">
+      <label class="field"><span class="lbl">Σχολείο</span><input type="text" id="schoolInput"></label>
+      <label class="field"><span class="lbl">Περίοδος (εμφανίζεται ως «από …»)</span><input type="text" id="dateInput"></label>
+    </div>
+
+    <div class="switch-row">
+      <div class="switch" id="eaeSwitch" role="switch" aria-checked="false" tabindex="0"><div class="knob"></div></div>
+      <div class="switch-copy"><b>Συμπερίληψη εκπαιδευτικών ΕΑΕ</b><span>Όταν είναι κλειστό, όσοι έχουν «ΕΑΕ» στην ειδικότητα δεν μπαίνουν καθόλου στην κλήρωση εφημεριών.</span></div>
+    </div>
+    <div class="switch-row">
+      <div class="switch on" id="dblSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
+      <div class="switch-copy"><b>Αποφυγή διπλής εφημερίας ίδιας ημέρας</b><span>Όποιος τοποθετηθεί στην Α΄ βάρδια μιας ημέρας, δεν προτείνεται ξανά αυτόματα για τη Β΄ βάρδια της ίδιας ημέρας.</span></div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <label class="field"><span class="lbl">Μόνιμα εξαιρούμενοι από εφημερίες (ένα όνομα/επώνυμο ανά γραμμή)</span>
+        <textarea id="exclusionInput" rows="5"></textarea>
+      </label>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Εξαίρεση συναδέλφου για συγκεκριμένες ημέρες (ακόμα κι αν έχει μάθημα)</div>
+      <p class="sub" style="margin-top:0;">Διάλεξε εκπαιδευτικό κάτω από την ημέρα στην οποία δεν θέλεις να μπει σε εφημερία. Αν ήδη είναι τοποθετημένος εκείνη την ημέρα, η ημέρα ξαναμοιράζεται αυτόματα χωρίς αυτόν.</p>
+      <div id="dayExclusions"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Εκπαιδευτικοί με λιγότερες εφημερίες (αν γίνεται)</div>
+      <p class="sub" style="margin-top:0;">Όσοι επιλεγούν εδώ θα παίρνουν περίπου τις μισές εφημερίες σε σχέση με τους υπόλοιπους — όχι αυστηρά: αν σε κάποια ώρα δεν υπάρχουν αρκετοί διαθέσιμοι, μπορεί να τοποθετηθούν. Ισχύει στην επόμενη «Νέα τοποθέτηση».</p>
+      <div id="lightLoad"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Μάχιμοι (μόνο ισόγειο ή 3ος όροφος)</div>
+      <p class="sub" style="margin-top:0;">Όσοι προστεθούν εδώ, όταν έχουν εφημερία, τοποθετούνται μόνο στο ισόγειο ή στον 3ο όροφο — ποτέ στον 2ο όροφο ή στην ΑΝΑΠΛΗΡΩΣΗ. Μετράνε κανονικά στην ίση κατανομή. Ισχύει στην επόμενη «Νέα τοποθέτηση».</p>
+      <div id="combatList"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Μέγιστος αριθμός ημερών εφημερίας ανά εκπαιδευτικό</div>
+      <p class="sub" style="margin-top:0;">Διάλεξε εκπαιδευτικό και πόσες ημέρες της εβδομάδας το πολύ θα κάνει εφημερία (π.χ. 2). Η εφαρμογή δεν τον βάζει σε περισσότερες ημέρες, εκτός αν δεν υπάρχουν αρκετοί άλλοι διαθέσιμοι — τότε εμφανίζεται προειδοποίηση. Ισχύει στην επόμενη «Νέα τοποθέτηση».</p>
+      <div id="maxDaysList"></div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Δίκαιη κατανομή μεταξύ διαφορετικών εβδομάδων (προαιρετικό)</div>
+      <p class="sub" style="margin-top:0;">Χωρίς εισαγωγή, η δίκαιη κατανομή υπολογίζεται μόνο μέσα στην τρέχουσα εβδομάδα. Αν ανεβάσεις το αρχείο στατιστικών που κατέβασες την προηγούμενη φορά, οι νέες τοποθετήσεις θα λαμβάνουν υπόψη και τις παλιότερες εφημερίες.</p>
+      <div id="priorStatsStatus" class="parse-status" style="margin-bottom:8px;"></div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <label class="link-btn" style="cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+          Εισαγωγή στατιστικών προηγούμενης εβδομάδας
+          <input type="file" id="priorStatsInput" accept=".json,application/json" style="display:none;">
+        </label>
+        <button class="link-btn" id="clearPriorStatsBtn" type="button" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          Απενεργοποίηση
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Θέσεις εφημερίας &amp; αριθμός εκπαιδευτικών ανά βάρδια</div>
+      <p class="sub" style="margin-top:0;">Σειρά προτεραιότητας στην αυτόματη τοποθέτηση: 1) ίση κατανομή του συνολικού αριθμού εφημεριών της εβδομάδας σε όλους (πρώτα αποφασίζεται ΠΟΙΟΣ κάνει εφημερία, ανεξαρτήτως αίθουσας) · 2) κανείς δεν μπαίνει και στις δύο βάρδιες την ίδια μέρα · 3) μόνο μετά, η αίθουσα διδασκαλίας αποφασίζει ΠΟΥ, όσο γίνεται: Γ1–Γ4, Β3, Β4 → 3ος όροφος, Α1–Α5, Β1 → ισόγειο ή 2ος όροφος, Ζευκιλής/Καλογήρου/ο,τι διδάσκει στο Β2 → ισόγειο. Αν χρειαστεί, κάποιος μπορεί να μπει σε θέση εκτός αίθουσάς του ώστε να μην χαλάσει η ισορροπία. Γι' αυτό οι τρεις παρακάτω θέσεις είναι σταθερές· μπορείς να αλλάξεις μόνο τον τίτλο ή τον αριθμό ατόμων ανά βάρδια.</p>
+      <div style="overflow-x:auto;">
+        <table class="tpl" id="posTable">
+          <thead><tr><th>Θέση</th><th>Α΄ βάρδια</th><th>Β΄ βάρδια</th></tr></thead>
+          <tbody id="posTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="empty-state" id="emptyState">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity:.6"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>
+      <p style="margin:12px 0 0; font-size:14.5px;">Οι εφημερίες κάθε ημέρας θα εμφανιστούν εδώ, έτοιμες για έλεγχο και διόρθωση.</p>
+      <ol>
+        <li><span class="step-no">1</span>Ανέβασε το πρόγραμμα .xlsx</li>
+        <li><span class="step-no">2</span>Έλεγξε τις ρυθμίσεις και τις τοποθετήσεις</li>
+        <li><span class="step-no">3</span>Κατέβασε το έτοιμο Word</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card" id="footnoteCard" hidden>
+    <h2><span class="step-no">3</span>Σημειώσεις κάτω από τον πίνακα</h2>
+    <p class="sub">Το κείμενο εμφανίζεται αυτούσιο στο τέλος του εγγράφου Word (οδηγίες εποπτείας κ.λπ.). Προσάρμοσέ το ελεύθερα.</p>
+    <textarea id="footnote" rows="9"></textarea>
+  </div>
+
+  <div class="card" id="statsCard" hidden>
+    <h2><span class="step-no">4</span>Στατιστικά &amp; έλεγχος λαθών</h2>
+    <p class="sub">Αυτόματος έλεγχος πριν τη λήψη: άγνωστα ονόματα (πιθανό τυπογραφικό), εξαιρούμενοι που τοποθετήθηκαν κατά λάθος, διπλές τοποθετήσεις, ή κάποιος τοποθετημένος σε ώρα που δεν έχει μάθημα. Ενημερώνεται αυτόματα.</p>
+    <div class="parse-status" id="statsSummary"></div>
+    <div id="statsIssues"></div>
+    <div style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+        <div class="lbl" style="font-size:13px; font-weight:600;">Εφημερίες ανά εκπαιδευτικό</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="exportXlsxBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5 5 5-5M5 3h14"/></svg>
+            Λήψη Excel
+          </button>
+          <button class="btn btn-ghost" id="saveHistoryBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+            Αποθήκευση στο ιστορικό
+          </button>
+          <button class="btn btn-ghost" id="exportStatsBtn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5 5 5-5M5 3h14"/></svg>
+            Αρχείο JSON
+          </button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tpl" id="statsTable">
+          <thead id="statsTableHead"><tr><th>Εκπαιδευτικός</th><th>Ειδικότητα</th><th style="text-align:center;">Πλήθος</th><th>Κατανομή</th></tr></thead>
+          <tbody id="statsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="historyCard">
+    <h2>Ιστορικό στατιστικών</h2>
+    <p class="sub">Πάτα «Αποθήκευση στο ιστορικό» (στα Στατιστικά) για να κρατάς κάθε εβδομάδα. Εδώ τα βλέπεις ξανά, κατεβάζεις Excel, ή τα χρησιμοποιείς ως βάση για δίκαιη κατανομή. Το ιστορικό μένει <b>σε αυτή τη συσκευή / browser</b> — για αντίγραφο ή για άλλη συσκευή κατέβασε το αρχείο «Ιστορικό (JSON)» και εισήγαγέ το εκεί.</p>
+    <div class="parse-status" id="historyStatus"></div>
+    <div id="historyList"></div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+      <button class="btn btn-ghost" id="histExcelAllBtn" type="button" hidden>Excel όλου του ιστορικού</button>
+      <button class="btn btn-ghost" id="histJsonAllBtn" type="button" hidden>Ιστορικό (JSON)</button>
+      <label class="link-btn" style="cursor:pointer;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+        Εισαγωγή αρχείου (ιστορικό ή στατιστικά JSON)
+        <input type="file" id="histImportInput" accept=".json,application/json" style="display:none;">
+      </label>
+    </div>
+    <div id="historyView" style="margin-top:14px; overflow-x:auto;"></div>
+  </div>
+
+  <div class="actionbar" id="actionbar" hidden>
+    <div class="status" id="statusText">Έτοιμο για λήψη.</div>
+    <button class="btn btn-ghost" id="regenBtn" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+      Νέα τοποθέτηση (όλες οι ημέρες)
+    </button>
+    <button class="btn btn-ghost" id="saveSessionBtn" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
+      Αποθήκευση επεξεργασίας
+    </button>
+    <button class="btn btn-primary" id="downloadBtn" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
+      Λήψη Word
+    </button>
+  </div>
+
+  <footer class="note">Η επεξεργασία του προγράμματος γίνεται τοπικά στον browser — τα ονόματα δεν αποστέλλονται πουθενά.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ============================================================
+   CORE LOGIC (schedule parsing, assignment, .docx generation)
+   ============================================================ */
+
+function normGr(s) {
+  return String(s == null ? '' : s).toUpperCase().replace(/\s+/g, ' ').trim();
+}
+
+function capsNoTonos(s) {
+  return String(s == null ? '' : s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').normalize('NFC');
+}
+
+function cellAt(ws, XLSXref, merges, r, c) {
+  for (let i = 0; i < merges.length; i++) {
+    const m = merges[i];
+    if (r >= m.s.r && r <= m.e.r && c >= m.s.c && c <= m.e.c) { r = m.s.r; c = m.s.c; break; }
+  }
+  const addr = XLSXref.utils.encode_cell({ r, c });
+  const cell = ws[addr];
+  return cell ? cell.v : undefined;
+}
+
+function isBlank(v) {
+  return v === undefined || v === null || String(v).trim() === '';
+}
+
+function parseWorkbook(XLSXref, wb) {
+  const wsName = wb.SheetNames[0];
+  const ws = wb.Sheets[wsName];
+  if (!ws || !ws['!ref']) throw new Error('Το βιβλίο εργασίας δεν έχει αναγνώσιμο φύλλο.');
+  const range = XLSXref.utils.decode_range(ws['!ref']);
+  const merges = ws['!merges'] || [];
+  const val = (r, c) => cellAt(ws, XLSXref, merges, r, c);
+
+  let headerRow = -1, nameCol = -1;
+  outer:
+  for (let r = range.s.r; r <= Math.min(range.e.r, range.s.r + 30); r++) {
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const v = val(r, c);
+      if (typeof v === 'string' && normGr(v).indexOf('ΕΚΠΑΙΔΕΥΤΙΚ') === 0) {
+        headerRow = r; nameCol = c; break outer;
+      }
+    }
+  }
+  if (headerRow < 0) throw new Error('Δεν βρέθηκε η στήλη «Εκπαιδευτικός» στο πρόγραμμα.');
+
+  let specCol = nameCol + 1;
+  {
+    const v = val(headerRow, specCol);
+    if (!(typeof v === 'string' && normGr(v).indexOf('ΕΙΔΙΚΟΤ') === 0)) {
+      for (let c = nameCol + 1; c <= nameCol + 4; c++) {
+        const vv = val(headerRow, c);
+        if (typeof vv === 'string' && normGr(vv).indexOf('ΕΙΔΙΚΟΤ') === 0) { specCol = c; break; }
+      }
+    }
+  }
+
+  const days = [];
+  let lastPushedName = null;
+  for (let c = specCol + 1; c <= range.e.c; c++) {
+    const v = val(headerRow, c);
+    if (typeof v === 'string' && v.trim().length > 0 && v.trim() !== lastPushedName) {
+      days.push({ name: v.trim(), startCol: c });
+      lastPushedName = v.trim();
+    }
+  }
+  if (days.length === 0) throw new Error('Δεν βρέθηκαν ημέρες (Δευτέρα–Παρασκευή) στο πρόγραμμα.');
+
+  const periodRow = headerRow + 1;
+  days.forEach((d, i) => {
+    const endCol = (i + 1 < days.length) ? days[i + 1].startCol - 1 : range.e.c;
+    let p1Col = null, p6Col = null;
+    for (let c = d.startCol; c <= endCol; c++) {
+      const pv = val(periodRow, c);
+      const n = (typeof pv === 'number') ? pv : parseInt(pv, 10);
+      if (n === 1 && p1Col === null) p1Col = c;
+      if (n === 6 && p6Col === null) p6Col = c;
+    }
+    d.endCol = endCol; d.p1Col = p1Col; d.p6Col = p6Col;
+  });
+
+  const teachers = [];
+  for (let r = periodRow + 1; r <= range.e.r; r++) {
+    const nameV = val(r, nameCol);
+    if (isBlank(nameV)) continue;
+    const name = String(nameV).trim();
+    const specialty = isBlank(val(r, specCol)) ? '' : String(val(r, specCol)).trim();
+    const rec = { name, specialty, days: {} };
+    days.forEach(d => {
+      const v1 = d.p1Col != null ? val(r, d.p1Col) : undefined;
+      const v6 = d.p6Col != null ? val(r, d.p6Col) : undefined;
+      rec.days[d.name] = {
+        p1: !isBlank(v1), p1Room: isBlank(v1) ? '' : String(v1).trim(),
+        p6: !isBlank(v6), p6Room: isBlank(v6) ? '' : String(v6).trim(),
+      };
+    });
+    teachers.push(rec);
+  }
+  if (teachers.length === 0) throw new Error('Δεν βρέθηκαν εκπαιδευτικοί κάτω από την επικεφαλίδα.');
+
+  let school = '', dateLabel = '';
+  for (let r = range.s.r; r < headerRow; r++) {
+    const v = val(r, range.s.c);
+    if (typeof v === 'string' && v.trim()) {
+      if (!school) school = v.trim();
+      const m = v.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+      if (m) {
+        const months = ['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+        const dd = parseInt(m[1], 10), mm = parseInt(m[2], 10), yyyy = m[3];
+        if (mm >= 1 && mm <= 12) dateLabel = dd + ' ' + months[mm - 1] + ' ' + yyyy;
+      }
+    }
+  }
+  return { teachers, days: days.map(d => d.name), school, dateLabel };
+}
+
+function isExcluded(name, exclusionList) {
+  const n = normGr(name);
+  return exclusionList.some(x => x.trim() && n.indexOf(normGr(x)) !== -1);
+}
+function isEAE(specialty) { return normGr(specialty).indexOf('ΕΑΕ') !== -1; }
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* Random tie-break, then stable-sort ascending by current load, so teachers with
+   fewer duties so far get first pick while equally-loaded teachers stay randomized
+   relative to each other (relies on Array#sort's guaranteed stability). */
+function orderByLoad(names, counts, weightOf) {
+  const shuffled = shuffleArr(names);
+  const raw = (n) => (!counts ? 0 : (counts instanceof Map ? (counts.get(n) || 0) : (counts[n] || 0)));
+  // Weighted fair share: effective load = (duties after taking one more) / weight.
+  // weight 1 = normal (same order as plain count), 0.5 = "fewer duties if possible".
+  const load = (n) => (raw(n) + 1) / ((weightOf && weightOf(n)) || 1);
+  return shuffled.slice().sort((a, b) => load(a) - load(b));
+}
+const LIGHT_LOAD_WEIGHT = 0.33;
+
+const FLOOR3_ROOMS = ['Γ1', 'Γ2', 'Γ3', 'Γ4', 'Β3', 'Β4'];
+const FLOOR2_ROOMS = ['Α1', 'Α2', 'Α3', 'Α4', 'Α5', 'Β1'];
+const GROUND_FIXED_FRAGMENTS = ['ΖΕΥΚΙΛΗ', 'ΚΑΛΟΓΗΡ'];
+const GROUND_ROOM = 'Β2';
+
+function roomFloor(room) {
+  if (!room) return null;
+  if (FLOOR3_ROOMS.indexOf(room) !== -1) return 3;
+  if (FLOOR2_ROOMS.indexOf(room) !== -1) return 2;
+  return null;
+}
+
+function findByNameFragment(model, fragment) {
+  const f = normGr(fragment);
+  const t = model.teachers.find(t2 => normGr(t2.name).indexOf(f) !== -1);
+  return t ? t.name : fragment;
+}
+
+/*
+ * Ανάθεση εφημεριών με αυτή τη σειρά προτεραιότητας:
+ *   1) Ίση κατανομή του ΣΥΝΟΛΙΚΟΥ αριθμού εφημεριών της εβδομάδας — κανείς δεν
+ *      πρέπει να καταλήξει με 5 εφημερίες ενώ κάποιος άλλος έχει 2. Το ΠΟΙΟΣ
+ *      κάνει εφημερία σε μια βάρδια αποφασίζεται λοιπόν πρώτα, από ΟΛΟΥΣ τους
+ *      επιλέξιμους εκπαιδευτικούς (όποιον έχει μάθημα εκείνη την ώρα) σαν μία
+ *      κοινή δεξαμενή, με δίκαιη/τυχαία σειρά φόρτου (orderByLoad) — η αίθουσα
+ *      δεν παίζει κανένα ρόλο σε αυτό το στάδιο.
+ *   2) Κανείς δεν τοποθετείται και στις δύο βάρδιες την ίδια μέρα (avoidDoubleShift).
+ *   3) Μόνο αφού έχει αποφασιστεί το ΠΟΙΟΣ (βήματα 1-2), η αίθουσα διδασκαλίας
+ *      αποφασίζει το ΠΟΥ, σε best-effort βάση: Γ1-Γ4/Β3/Β4 → 3ος όροφος ·
+ *      Α1-Α5/Β1 → ισόγειο Ή 2ος όροφος · Ζευκιλής/Καλογήρου/όποιος διδάσκει
+ *      Β2 → ισόγειο. Αν μια θέση έχει περισσότερους υποψήφιους από διαθέσιμες
+ *      θέσεις, καλύπτεται σωστά όσο γίνεται και οι υπόλοιποι μπαίνουν σε
+ *      όποια θέση έχει ακόμα χώρο — η ισότητα του βήματος 1 δεν θυσιάζεται
+ *      ποτέ για χάρη μιας «σωστής» τοποθέτησης θέσης.
+ * positions[0]=ισόγειο, [1]=2ος όροφος, [2]=3ος όροφος, [3]=ΑΝΑΠΛΗΡΩΣΗ
+ * (χωρίς προτίμηση αίθουσας/ορόφου — γεμίζει μόνο από την «αδιάθετη» δεξαμενή).
+ */
+function assignDay(model, dayName, opts) {
+  const { exclusionList, includeEAE, avoidDoubleShift, positions, priorCounts } = opts;
+  const dayOff = new Set(opts.dayExcludedNames || []);
+  const lightSet = new Set(opts.lightLoadNames || []);
+  const weightOf = (n) => (lightSet.has(n) ? LIGHT_LOAD_WEIGHT : 1);
+  const maxDays = opts.maxDays || {};                 // name -> max days this week
+  const daysUsed = opts.daysUsed || new Map();        // name -> days already on duty (other days)
+  const overDayCap = (n) => maxDays[n] != null && (daysUsed.get(n) || 0) >= maxDays[n];
+  const combatSet = new Set(opts.combatNames || []);   // «μάχιμοι»: μόνο ισόγειο ή 3ος όροφος
+  const base = model.teachers.filter(t => !isExcluded(t.name, exclusionList) && !dayOff.has(t.name) && (includeEAE || !isEAE(t.specialty)));
+
+  const localCounts = new Map();
+  if (priorCounts) {
+    if (priorCounts instanceof Map) priorCounts.forEach((v, k) => localCounts.set(k, v));
+    else Object.keys(priorCounts).forEach(k => localCounts.set(k, priorCounts[k]));
+  }
+  const bump = (name) => localCounts.set(name, (localCounts.get(name) || 0) + 1);
+
+  const posGround = positions[0] || { countA: 0, countB: 0 };
+  const pos2 = positions[1] || { countA: 0, countB: 0 };
+  const pos3 = positions[2] || { countA: 0, countB: 0 };
+  const posExtra = positions[3] || { countA: 0, countB: 0 };
+
+  const groundFixedNames = Array.from(new Set(GROUND_FIXED_FRAGMENTS.map(f => findByNameFragment(model, f))));
+
+  // Επιθυμητός όροφος για κάποιον που ήδη επιλέχθηκε (βήμα 3) — ποτέ δεν
+  // καθορίζει ΠΟΙΟΣ επιλέγεται, μόνο ΠΟΥ τοποθετείται αν γίνεται.
+  function preferredFloor(name, room) {
+    if (groundFixedNames.indexOf(name) !== -1 || room === GROUND_ROOM) return 'ground';
+    const floor = roomFloor(room);
+    if (floor === 2) return 'ground-or-2';
+    if (floor === 3) return 3;
+    return null;
+  }
+
+  function buildShift(roomKey, needGround, need2, need3, needExtra, excludeUsed) {
+    // Βήματα 1+2: όποιος έχει μάθημα εκείνη την ώρα (όποια κι αν είναι η
+    // αίθουσα), εκτός από όποιον έκανε ήδη εφημερία στην άλλη βάρδια σήμερα.
+    const roomByName = new Map();
+    base.forEach(t => {
+      const rec = t.days[dayName];
+      const room = rec && rec[roomKey];
+      if (!room) return;
+      if (excludeUsed && excludeUsed.has(t.name)) return;
+      roomByName.set(t.name, room);
+    });
+
+    const needTotal = needGround + need2 + need3 + needExtra;
+    const orderedNames = orderByLoad(Array.from(roomByName.keys()), localCounts, weightOf);
+    // Οι «μάχιμοι» μετράνε στην ίση κατανομή όπως όλοι, αλλά μπορούν να μπουν
+    // μόνο σε ισόγειο ή 3ο όροφο — άρα δεν επιλέγονται περισσότεροι από όσες
+    // θέσεις έχουν αυτές οι δύο (οι υπόλοιποι μάχιμοι περιμένουν την επόμενη μέρα).
+    const combatCap = needGround + need3;
+    let combatTaken = 0;
+    const selected = [];
+    const selectedSet = new Set();
+    const tryTake = (n) => {
+      if (selected.length >= needTotal || selectedSet.has(n)) return;
+      if (combatSet.has(n)) { if (combatTaken >= combatCap) return; combatTaken++; }
+      selected.push(n); selectedSet.add(n);
+    };
+    // Όριο ημερών ανά εκπαιδευτικό: πρώτα όσοι δεν το έχουν συμπληρώσει· μόνο αν
+    // δεν επαρκούν για τις θέσεις, συμπληρώνονται (με τη σειρά φόρτου) και οι υπόλοιποι.
+    orderedNames.filter(n => !overDayCap(n)).forEach(tryTake);
+    orderedNames.filter(overDayCap).forEach(tryTake);
+    selected.forEach(bump);
+
+    // Βήμα 3: best-effort τοποθέτηση όσων ήδη επιλέχθηκαν, ανά αίθουσα.
+    // Η ΑΝΑΠΛΗΡΩΣΗ (4η θέση) δεν έχει προτίμηση αίθουσας — γεμίζει μόνο από
+    // όσους δεν ταίριαξαν πουθενά αλλού.
+    const slotsGround = [], slots2 = [], slots3 = [], slotsExtra = [];
+    const unmatched = [];
+    // Πρώτα οι «μάχιμοι»: ισόγειο ή 3ος, με προτίμηση στον όροφο της αίθουσάς τους.
+    selected.filter(n => combatSet.has(n)).forEach(name => {
+      const pref = preferredFloor(name, roomByName.get(name));
+      const order = pref === 3 ? ['3', 'g'] : ['g', '3'];
+      for (const f of order) {
+        if (f === 'g' && slotsGround.length < needGround) { slotsGround.push(name); return; }
+        if (f === '3' && slots3.length < need3) { slots3.push(name); return; }
+      }
+    });
+    selected.filter(n => !combatSet.has(n)).forEach(name => {
+      const pref = preferredFloor(name, roomByName.get(name));
+      if (pref === 'ground' && slotsGround.length < needGround) { slotsGround.push(name); return; }
+      if (pref === 'ground-or-2') {
+        if (slotsGround.length < needGround) { slotsGround.push(name); return; }
+        if (slots2.length < need2) { slots2.push(name); return; }
+      }
+      if (pref === 3 && slots3.length < need3) { slots3.push(name); return; }
+      unmatched.push(name);
+    });
+    unmatched.forEach(name => {
+      if (slotsGround.length < needGround) slotsGround.push(name);
+      else if (slots2.length < need2) slots2.push(name);
+      else if (slots3.length < need3) slots3.push(name);
+      else if (slotsExtra.length < needExtra) slotsExtra.push(name);
+    });
+
+    return {
+      slotsGround, slots2, slots3, slotsExtra,
+      pool: orderedNames,
+      leftover: orderedNames.filter(n => !selectedSet.has(n)),
+      usedNames: new Set(selected),
+    };
+  }
+
+  const A = buildShift('p1Room', posGround.countA, pos2.countA, pos3.countA, posExtra.countA, null);
+  const B = buildShift('p6Room', posGround.countB, pos2.countB, pos3.countB, posExtra.countB, avoidDoubleShift ? A.usedNames : null);
+
+  return {
+    poolA: A.pool, poolB: B.pool,
+    slotsA: [A.slotsGround, A.slots2, A.slots3, A.slotsExtra],
+    slotsB: [B.slotsGround, B.slots2, B.slots3, B.slotsExtra],
+    leftoverA: A.leftover, leftoverB: B.leftover,
+    countA: (posGround.countA || 0) + (pos2.countA || 0) + (pos3.countA || 0) + (posExtra.countA || 0),
+    countB: (posGround.countB || 0) + (pos2.countB || 0) + (pos3.countB || 0) + (posExtra.countB || 0),
+  };
+}
+
+function xmlEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function runXml(text, opts) {
+  opts = opts || {};
+  const props = [];
+  if (opts.bold) props.push('<w:b/>');
+  props.push('<w:sz w:val="' + (opts.sz || 20) + '"/><w:szCs w:val="' + (opts.sz || 20) + '"/>');
+  const rPr = '<w:rPr>' + props.join('') + '</w:rPr>';
+  const lines = String(text == null ? '' : text).split('\n');
+  return lines.map((line, i) => (i > 0 ? '<w:br/>' : '') + '<w:r>' + rPr + '<w:t xml:space="preserve">' + xmlEsc(line) + '</w:t></w:r>').join('');
+}
+/* Tight paragraph props by default (opts.after lets a caller add breathing room); single line height. */
+function paraXml(text, opts) {
+  opts = opts || {};
+  const jc = opts.align ? '<w:jc w:val="' + opts.align + '"/>' : '';
+  const pageBreak = opts.pageBreakBefore ? '<w:pageBreakBefore/>' : '';
+  const after = opts.after != null ? opts.after : 0;
+  const pPr = '<w:pPr>' + pageBreak + jc + '<w:spacing w:before="0" w:after="' + after + '" w:line="240" w:lineRule="auto"/><w:contextualSpacing/></w:pPr>';
+  return '<w:p>' + pPr + runXml(text, opts) + '</w:p>';
+}
+function cellXml(text, opts) {
+  opts = opts || {};
+  const w = opts.width || 2000;
+  const gridSpan = opts.gridSpan ? '<w:gridSpan w:val="' + opts.gridSpan + '"/>' : '';
+  const fill = opts.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + opts.fill + '"/>' : '';
+  const tcPr = '<w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + gridSpan +
+    '<w:tcMar><w:top w:w="26" w:type="dxa"/><w:start w:w="90" w:type="dxa"/><w:bottom w:w="26" w:type="dxa"/><w:end w:w="90" w:type="dxa"/></w:tcMar>' +
+    '<w:tcBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:left w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:right w:val="single" w:sz="4" w:space="0" w:color="1E2420"/></w:tcBorders>' +
+    fill + '<w:vAlign w:val="center"/></w:tcPr>';
+  const align = opts.align || 'center';
+  return '<w:tc>' + tcPr + paraXml(text, { bold: opts.bold, align, sz: opts.sz }) + '</w:tc>';
+}
+function rowXml(cellsXml, trHeight) {
+  const h = trHeight ? '<w:trPr><w:trHeight w:val="' + trHeight + '" w:hRule="atLeast"/></w:trPr>' : '';
+  return '<w:tr>' + h + cellsXml.join('') + '</w:tr>';
+}
+
+/**
+ * Multiple names in one slot are stacked one-per-line (never joined on one line and
+ * left to wrap unpredictably) so the required height per row is fully deterministic —
+ * driven by exactly how many lines that row will render, not by how long the names
+ * happen to be. The whole size scale (fonts + row heights) also shrinks a little if
+ * the position template has more rows than the default 4-per-day one it was tuned
+ * for, so a bigger template still fits page 1 instead of silently overflowing.
+ * Notes ("ΣΗΜΕΙΩΣΕΙΣ") always start fresh on page 2 via a forced page break.
+ */
+function buildDocumentXml(model) {
+  const COL0 = 2600, COL1 = 4153, COL2 = 4153;
+  const GREEN = 'C9DFC6';
+
+  const totalLines = model.days.reduce((s, day) => {
+    const posLines = day.positions.reduce((ps, pos) => ps + Math.max(pos.slotsA.length || 1, pos.slotsB.length || 1), 0);
+    return s + 2 + posLines;
+  }, 0);
+  const BASELINE_LINES = 45; // 5 days × (1 + 1 + up to 7 position-lines) for the default 4-position template
+  const scale = Math.min(1, BASELINE_LINES / Math.max(1, totalLines));
+  const evenSz = (pt2, min) => Math.max(min, Math.round((pt2 * scale) / 2) * 2);
+
+  const ROW_SZ = evenSz(20, 14), LABEL_SZ = evenSz(20, 14), HEAD_SZ = evenSz(24, 16), SUB_SZ = evenSz(20, 14);
+  const HEAD_ROW_H = Math.round(380 * scale);
+  const BASE_ROW_H = Math.round(300 * scale);
+  const PER_LINE = Math.round(210 * scale);
+
+  const border = '<w:tblBorders>' +
+    '<w:top w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:left w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:right w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:insideH w:val="single" w:sz="4" w:space="0" w:color="1E2420"/>' +
+    '<w:insideV w:val="single" w:sz="4" w:space="0" w:color="1E2420"/></w:tblBorders>';
+
+  const rows = [];
+  model.days.forEach(day => {
+    rows.push(rowXml([cellXml(capsNoTonos(day.name), { width: COL0 + COL1 + COL2, gridSpan: 3, bold: true, fill: GREEN, sz: HEAD_SZ })], HEAD_ROW_H));
+    rows.push(rowXml([
+      cellXml('', { width: COL0, sz: SUB_SZ }),
+      cellXml('Α ΒΑΡΔΙΑ: ' + day.timeA, { width: COL1, bold: true, sz: SUB_SZ }),
+      cellXml('Β ΒΑΡΔΙΑ: ' + day.timeB, { width: COL2, bold: true, sz: SUB_SZ }),
+    ], HEAD_ROW_H));
+    day.positions.forEach(pos => {
+      const nLines = Math.max(pos.slotsA.length || 1, pos.slotsB.length || 1);
+      const rowH = BASE_ROW_H + (nLines - 1) * PER_LINE;
+      rows.push(rowXml([
+        cellXml(pos.label, { width: COL0, bold: true, sz: LABEL_SZ }),
+        cellXml(pos.slotsA.length ? pos.slotsA.join('\n') : '—', { width: COL1, sz: ROW_SZ }),
+        cellXml(pos.slotsB.length ? pos.slotsB.join('\n') : '—', { width: COL2, sz: ROW_SZ }),
+      ], rowH));
+    });
+  });
+
+  const tbl = '<w:tbl><w:tblPr><w:tblW w:w="' + (COL0 + COL1 + COL2) + '" w:type="dxa"/>' + border +
+    '<w:tblLayout w:type="fixed"/></w:tblPr>' +
+    '<w:tblGrid><w:gridCol w:w="' + COL0 + '"/><w:gridCol w:w="' + COL1 + '"/><w:gridCol w:w="' + COL2 + '"/></w:tblGrid>' +
+    rows.join('') + '</w:tbl>';
+
+  const title =
+    paraXml(model.school, { bold: true, align: 'center', sz: 22 }) +
+    paraXml('ΕΦΗΜΕΡΙΕΣ ΕΚΠΑΙΔΕΥΤΙΚΩΝ', { bold: true, align: 'center', sz: 28 }) +
+    paraXml('από ' + model.dateLabel, { bold: true, align: 'center', sz: 20 });
+
+  // Notes always start on their own page, right after the roster table.
+  // Headings (lines ending in ":") are centered; ordinary note text is
+  // left-aligned; blank lines are kept as small spacers.
+  const NOTES_TITLE_SZ = 24, NOTES_SZ = 20;
+  const notesTitle = paraXml('ΣΗΜΕΙΩΣΕΙΣ', { bold: true, align: 'center', sz: NOTES_TITLE_SZ, pageBreakBefore: true, after: 120 });
+  const footLines = String(model.footnote || '').split('\n');
+  const foot = footLines.map(line => {
+    const t = line.trim();
+    if (!t) return paraXml('', { sz: 8 });
+    const heading = t.slice(-1) === ':';
+    return paraXml(line, { align: heading ? 'center' : 'left', sz: NOTES_SZ, after: heading ? 40 : 60 });
+  }).join('');
+
+  const sectPr = '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
+    '<w:pgMar w:top="360" w:right="500" w:bottom="320" w:left="500" w:header="300" w:footer="300" w:gutter="0"/></w:sectPr>';
+
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:body>' + title + tbl + notesTitle + foot + sectPr + '</w:body></w:document>';
+}
+
+const CONTENT_TYPES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+  '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+  '<Default Extension="xml" ContentType="application/xml"/>' +
+  '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+  '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+  '</Types>';
+const ROOT_RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+  '</Relationships>';
+const DOC_RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+  '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+  '</Relationships>';
+const STYLES_XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+  '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+  '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>' +
+  '<w:sz w:val="28"/><w:szCs w:val="28"/><w:lang w:val="el-GR"/></w:rPr></w:rPrDefault></w:docDefaults>' +
+  '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>' +
+  '</w:styles>';
+
+async function buildDocxBytes(model) {
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', CONTENT_TYPES);
+  zip.file('_rels/.rels', ROOT_RELS);
+  zip.file('word/document.xml', buildDocumentXml(model));
+  zip.file('word/_rels/document.xml.rels', DOC_RELS);
+  zip.file('word/styles.xml', STYLES_XML);
+  return zip.generateAsync({ type: 'blob' });
+}
+
+/* ============================================================
+   APP STATE + UI
+   ============================================================ */
+
+const DEFAULT_EXCLUSIONS = ['ΜΑΡΑΒΕΛΙΑ', 'ΣΤΑΣΙΝΟΥΛΙΑ', 'ΤΣΙΜΠΙΝΟΣ', 'ΜΠΙΡΗΣ', 'ΓΕΩΡΓΙΟΥ', 'ΧΛΟΠΤΣΙΔΟΥ', 'ΙΕΡΟΜΝΗΜΩΝ', 'ΜΠΟΥΚΟΥΒΑΛΑ', 'ΚΑΡΥΔΙΑΝΑΚΗΣ'];
+const DEFAULT_FOOTNOTE =
+  '*Πρώτα μοιράζονται ισόποσα οι εφημερίες της εβδομάδας σε όλους τους εκπαιδευτικούς, και μετά τοποθετούνται όσο γίνεται στη θέση που ταιριάζει με την αίθουσα διδασκαλίας τους εκείνη την ώρα\n' +
+  '-στο ισόγειο (3 άτομα):\n' +
+  '\n' +
+  'Καλύπτεται κατά προτεραιότητα από τον/την εκπαιδευτικό που διδάσκει στο Β2 εκείνη την ώρα (όταν υπάρχει), από τον/την Ζευκιλή και την Καλογήρου, καθώς και από όποιον διδάσκει εκείνη την ώρα στα Α1, Α2, Α3, Α4, Α5 ή Β1 — οι τελευταίοι μπορούν να καλύψουν είτε το ισόγειο είτε τον 2ο όροφο.\n' +
+  'Ένας/μία εποπτεύει στην κεντρική είσοδο, άλλος/η στην πίσω έξοδο προς το προαύλιο ώστε να έχει οπτική επαφή και στον εσωτερικό διάδρομο (τουαλέτες) και ο τρίτος εποπτεύει το γήπεδο βόλεϊ και τις βρύσες.\n' +
+  '\n' +
+  '-στον 1ο όροφο:\n' +
+  '\n' +
+  'Ο/Η εκπαιδευτικός του Β2 προτρέπει τους μαθητές να ανεβαίνουν στον επάνω όροφο (ενημερωτικά — δεν αποτελεί ξεχωριστή θέση εφημερίας).\n' +
+  '\n' +
+  '-στον 2ο όροφο (3 άτομα):\n' +
+  '\n' +
+  'Εφημερεύουν κατά προτεραιότητα όσοι διδάσκουν εκείνη την ώρα στα Α1, Α2, Α3, Α4, Α5 ή Β1 και δεν τοποθετήθηκαν στο ισόγειο, προτρέποντας (όπως όλοι οι εφημερεύοντες) τους μαθητές να περνούν στον εξωτερικό προαύλιο χώρο.\n' +
+  'Προτείνεται:\n' +
+  'Ο 1ος αναφερόμενος στο παραπάνω πρόγραμμα, συνάδελφος εποπτεύει στην είσοδο δίπλα στο κυλικείο και τις τουαλέτες,\n' +
+  'Ο 2ος εποπτεύει στην είσοδο δίπλα στην αίθουσα του Β1, και προτρέπει (όλοι οι εφημερεύοντες) τους μαθητές να περνούν στον εξωτερικό προαύλιο χώρο όπου εφημερεύει ο 3ος συνάδελφος.\n' +
+  'Ο 3ος εποπτεύει το μπαλκόνι και τις τουαλέτες\n' +
+  '\n' +
+  '-στον 3ο όροφο (2 άτομα):\n' +
+  '\n' +
+  'Εφημερεύουν κατά προτεραιότητα όσοι διδάσκουν εκείνη την ώρα στα Γ1, Γ2, Γ3, Γ4, Β3 ή Β4, προτρέποντας τους μαθητές να περάσουν στον προαύλιο χώρο.\n' +
+  'Ιδιαίτερη προσοχή στις τουαλέτες τόσο του ισογείου όσο και του 2ου ορόφου.\n' +
+  '(Η αντιστοίχιση θέσης-αίθουσας είναι κατά το δυνατόν· αν χρειαστεί για να μείνει ισόποση η κατανομή, κάποιος μπορεί να τοποθετηθεί σε άλλη θέση από τη συνήθη.)\n' +
+  '**Οι εφημερεύοντες κατά το σχόλασμα φροντίζουν για τη συγκέντρωση και αρχειοθέτηση των απουσιολογίων και βιβλίων ύλης, τα οποία οι εκπαιδευτικοί της τελευταίας διδακτικής ώρας κάθε τμήματος φέρνουν στο γραφείο.';
+
+const state = {
+  model: null,          // parsed workbook model
+  school: '',
+  dateLabel: '',
+  includeEAE: false,
+  avoidDoubleShift: true,
+  exclusions: DEFAULT_EXCLUSIONS.slice(),
+  maxDays: {},           // teacher name -> max number of duty days this week
+  combat: [],            // «μάχιμοι»: όταν έχουν εφημερία μπαίνουν μόνο ισόγειο ή 3ο όροφο
+  lightLoad: [],         // teacher names who should get fewer duties if possible
+  dayExclusions: {},     // dayName -> [teacher names excluded just for that day]
+  positions: [
+    { label: 'ΙΣΟΓΕΙΟ - ΜΠΑΣΚΕΤ (Α)', countA: 3, countB: 3 },
+    { label: '2ΟΣ ΟΡΟΦΟΣ*', countA: 3, countB: 3 },
+    { label: '3ΟΣ ΟΡΟΦΟΣ', countA: 2, countB: 2 },
+    { label: 'ΑΝΑΠΛΗΡΩΣΗ', countA: 1, countB: 1 },
+  ],
+  dayTimes: {},          // dayName -> {a, b}
+  assignments: {},       // dayName -> {slotsA:[[..]], slotsB:[[..]], leftoverA:[], leftoverB:[]}
+  footnote: DEFAULT_FOOTNOTE,
+  priorCounts: null,     // Map(name -> count) imported from a previous week's exported stats, or null
+  priorMeta: null,       // { dateLabel, generatedAt, teacherCount } about the imported file, for display only
+};
+
+const $ = (id) => document.getElementById(id);
+
+function defaultTimeFor(dayName) {
+  const isFri = normGr(dayName).indexOf('ΠΑΡΑΣΚ') === 0;
+  return { a: '08:00-10:55', b: isFri ? '11:40-13:30' : '11:40-14:15' };
+}
+
+/* Filename-safe date stamp for downloads. Prefers the «Περίοδος» label typed
+   in settings (e.g. "14 Σεπτεμβρίου 2026"); if that's empty, falls back to
+   today's actual date instead of a placeholder word, so a date is always
+   present in the filename. */
+function dateStampForFilename() {
+  const label = (state.dateLabel || '').trim();
+  if (label) return label.replace(/[\\\/:*?"<>|]+/g, '-').replace(/\s+/g, '_');
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear();
+}
+
+/* ---------- fewer duties if possible ---------- */
+
+function renderLightLoad() {
+  const host = $('lightLoad');
+  if (!host) return;
+  if (!state.model) { host.innerHTML = ''; return; }
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  const chips = state.lightLoad.map(n =>
+    '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) +
+    ' <button type="button" class="ll-remove" data-name="' + escapeAttr(n) + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;line-height:1;padding:0;">×</button></span>'
+  ).join('');
+  const opts = names.filter(n => state.lightLoad.indexOf(n) === -1)
+    .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
+  host.innerHTML = '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+    '<div style="display:flex; gap:6px; flex-wrap:wrap; flex:1; min-width:140px;">' + (chips || '<span style="color:var(--ink-muted); font-size:13px;">Κανένας — όλοι ισότιμα</span>') + '</div>' +
+    '<select id="llAdd" style="font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); max-width:230px;">' +
+    '<option value="">+ Λιγότερες εφημερίες σε…</option>' + opts + '</select></div>';
+  $('llAdd').addEventListener('change', e => {
+    const name = e.target.value;
+    if (!name) return;
+    if (state.lightLoad.indexOf(name) === -1) state.lightLoad.push(name);
+    renderLightLoad();
+    renderStats();
+    setStatus('Ο/Η ' + name + ' θα έχει λιγότερες εφημερίες — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  });
+  host.querySelectorAll('.ll-remove').forEach(btn => btn.addEventListener('click', e => {
+    const name = e.currentTarget.dataset.name;
+    state.lightLoad = state.lightLoad.filter(n => n !== name);
+    renderLightLoad();
+    renderStats();
+    setStatus('Ο/Η ' + name + ' επανήλθε στο κανονικό μοίρασμα — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  }));
+}
+
+function renderCombat() {
+  const host = $('combatList');
+  if (!host) return;
+  if (!state.model) { host.innerHTML = ''; return; }
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  const chips = state.combat.map(n =>
+    '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) +
+    ' <button type="button" class="cb-remove" data-name="' + escapeAttr(n) + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;line-height:1;padding:0;">×</button></span>'
+  ).join('');
+  const opts = names.filter(n => state.combat.indexOf(n) === -1)
+    .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
+  host.innerHTML = '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+    '<div style="display:flex; gap:6px; flex-wrap:wrap; flex:1; min-width:140px;">' + (chips || '<span style="color:var(--ink-muted); font-size:13px;">Κανένας</span>') + '</div>' +
+    '<select id="cbAdd" style="font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); max-width:230px;">' +
+    '<option value="">+ Προσθήκη μάχιμου…</option>' + opts + '</select></div>';
+  $('cbAdd').addEventListener('change', e => {
+    const name = e.target.value;
+    if (!name) return;
+    if (state.combat.indexOf(name) === -1) state.combat.push(name);
+    renderCombat();
+    renderStats();
+    setStatus('Ο/Η ' + name + ' ορίστηκε ως μάχιμος/η (ισόγειο ή 3ος) — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  });
+  host.querySelectorAll('.cb-remove').forEach(btn => btn.addEventListener('click', e => {
+    const name = e.currentTarget.dataset.name;
+    state.combat = state.combat.filter(n => n !== name);
+    renderCombat();
+    renderStats();
+    setStatus('Ο/Η ' + name + ' δεν είναι πια στους μάχιμους — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  }));
+}
+
+/* ---------- max duty days per teacher ---------- */
+
+function renderMaxDays() {
+  const host = $('maxDaysList');
+  if (!host) return;
+  if (!state.model) { host.innerHTML = ''; return; }
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  const nDays = state.model.days.length;
+  const sel = 'font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink);';
+  const rows = Object.keys(state.maxDays).sort((a, b) => a.localeCompare(b, 'el')).map(n => {
+    let o = '';
+    for (let k = 1; k <= nDays; k++) o += '<option value="' + k + '"' + (state.maxDays[n] === k ? ' selected' : '') + '>' + k + (k === 1 ? ' ημέρα' : ' ημέρες') + '</option>';
+    return '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0;">' +
+      '<span style="flex:1; min-width:140px; font-size:13px;">' + escapeAttr(n) + '</span>' +
+      '<select class="md-val" data-name="' + escapeAttr(n) + '" style="' + sel + '">' + o + '</select>' +
+      '<button type="button" class="md-remove" data-name="' + escapeAttr(n) + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:16px;line-height:1;">×</button></div>';
+  }).join('');
+  const opts = names.filter(n => state.maxDays[n] == null)
+    .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
+  host.innerHTML = (rows || '<div style="color:var(--ink-muted); font-size:13px; padding:4px 0;">Κανένας περιορισμός</div>') +
+    '<select id="mdAdd" style="' + sel + ' max-width:260px; margin-top:6px;"><option value="">+ Όριο ημερών σε…</option>' + opts + '</select>';
+  $('mdAdd').addEventListener('change', e => {
+    const name = e.target.value;
+    if (!name) return;
+    state.maxDays[name] = Math.min(2, nDays);
+    renderMaxDays(); renderStats();
+    setStatus('Ορίστηκε όριο ' + state.maxDays[name] + ' ημερών για ' + name + ' — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  });
+  host.querySelectorAll('.md-val').forEach(el => el.addEventListener('change', e => {
+    state.maxDays[e.target.dataset.name] = parseInt(e.target.value, 10);
+    renderStats();
+    setStatus('Το όριο ημερών άλλαξε — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  }));
+  host.querySelectorAll('.md-remove').forEach(btn => btn.addEventListener('click', e => {
+    delete state.maxDays[e.currentTarget.dataset.name];
+    renderMaxDays(); renderStats();
+    setStatus('Αφαιρέθηκε το όριο ημερών — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+  }));
+}
+
+/* ---------- day-specific exclusions ---------- */
+
+function renderDayExclusions() {
+  const host = $('dayExclusions');
+  if (!host) return;
+  if (!state.model) { host.innerHTML = ''; return; }
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  host.innerHTML = state.model.days.map(day => {
+    const off = state.dayExclusions[day] || [];
+    const chips = off.map(n =>
+      '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) +
+      ' <button type="button" class="dx-remove" data-day="' + escapeAttr(day) + '" data-name="' + escapeAttr(n) + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;line-height:1;padding:0;">×</button></span>'
+    ).join('');
+    const opts = names.filter(n => off.indexOf(n) === -1)
+      .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
+    return '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line);">' +
+      '<b style="min-width:92px; font-size:13px;">' + escapeAttr(day) + '</b>' +
+      '<div style="display:flex; gap:6px; flex-wrap:wrap; flex:1; min-width:140px;">' + (chips || '<span style="color:var(--ink-muted); font-size:13px;">—</span>') + '</div>' +
+      '<select class="dx-add" data-day="' + escapeAttr(day) + '" style="font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); max-width:230px;">' +
+      '<option value="">+ Εξαίρεση εκπαιδευτικού…</option>' + opts + '</select></div>';
+  }).join('');
+
+  host.querySelectorAll('.dx-add').forEach(sel => sel.addEventListener('change', e => {
+    const day = e.target.dataset.day, name = e.target.value;
+    if (!name) return;
+    addDayExclusion(day, name);
+  }));
+  host.querySelectorAll('.dx-remove').forEach(btn => btn.addEventListener('click', e => {
+    removeDayExclusion(e.currentTarget.dataset.day, e.currentTarget.dataset.name);
+  }));
+}
+
+function addDayExclusion(day, name) {
+  const list = state.dayExclusions[day] || (state.dayExclusions[day] = []);
+  if (list.indexOf(name) === -1) list.push(name);
+  const a = state.assignments[day];
+  const placed = a && a.slotsA.flat().concat(a.slotsB.flat()).indexOf(name) !== -1;
+  if (placed) {
+    runAssignment(day);
+    renderResults();
+    setStatus('Ο/Η ' + name + ' εξαιρέθηκε για ' + day + ' και η ημέρα ξαναμοιράστηκε.');
+  } else {
+    renderStats();
+    setStatus('Ο/Η ' + name + ' εξαιρέθηκε για ' + day + '.');
+  }
+  renderDayExclusions();
+}
+
+function removeDayExclusion(day, name) {
+  state.dayExclusions[day] = (state.dayExclusions[day] || []).filter(n => n !== name);
+  if (!state.dayExclusions[day].length) delete state.dayExclusions[day];
+  renderStats();
+  renderDayExclusions();
+  setStatus('Αφαιρέθηκε η εξαίρεση του/της ' + name + ' για ' + day + '.');
+}
+
+/* ---------- rendering: settings ---------- */
+
+/* Οι θέσεις είναι πλέον σταθερές σε πλήθος (3: ισόγειο/2ος/3ος όροφος) γιατί
+   η τοποθέτηση καθορίζεται από την αίθουσα διδασκαλίας (βλ. assignDay) — ο
+   πίνακας επιτρέπει μόνο επεξεργασία τίτλου/αριθμού ατόμων, όχι προσθήκη ή
+   αφαίρεση γραμμών. */
+function renderPosTable() {
+  const body = $('posTableBody');
+  body.innerHTML = '';
+  state.positions.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" data-idx="' + i + '" class="pos-label-in" value="' + escapeAttr(p.label) + '"></td>' +
+      '<td><input type="number" min="0" max="9" data-idx="' + i + '" class="pos-a-in" value="' + p.countA + '"></td>' +
+      '<td><input type="number" min="0" max="9" data-idx="' + i + '" class="pos-b-in" value="' + p.countB + '"></td>';
+    body.appendChild(tr);
+  });
+  body.querySelectorAll('.pos-label-in').forEach(el => el.addEventListener('input', e => {
+    state.positions[+e.target.dataset.idx].label = e.target.value;
+    renderStats();
+  }));
+  body.querySelectorAll('.pos-a-in').forEach(el => el.addEventListener('input', e => {
+    state.positions[+e.target.dataset.idx].countA = Math.max(0, parseInt(e.target.value, 10) || 0);
+    renderStats();
+  }));
+  body.querySelectorAll('.pos-b-in').forEach(el => el.addEventListener('input', e => {
+    state.positions[+e.target.dataset.idx].countB = Math.max(0, parseInt(e.target.value, 10) || 0);
+    renderStats();
+  }));
+}
+
+function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+
+$('eaeSwitch').addEventListener('click', () => toggleSwitch('eaeSwitch', v => state.includeEAE = v));
+$('dblSwitch').addEventListener('click', () => toggleSwitch('dblSwitch', v => state.avoidDoubleShift = v));
+[$('eaeSwitch'), $('dblSwitch')].forEach(el => el.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+}));
+function toggleSwitch(id, setter) {
+  const el = $(id);
+  const on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  el.setAttribute('aria-checked', String(on));
+  setter(on);
+  renderStats();
+}
+
+$('schoolInput').addEventListener('input', e => state.school = e.target.value);
+$('dateInput').addEventListener('input', e => state.dateLabel = e.target.value);
+$('exclusionInput').addEventListener('input', e => {
+  state.exclusions = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+  renderStats();
+});
+$('footnote').addEventListener('input', e => state.footnote = e.target.value);
+
+/* ---------- cross-week fairness: import/export of a small stats file ---------- */
+
+const PRIOR_STATS_FILE_TYPE = 'efimeries-stats-v1';
+
+function renderPriorStatsStatus() {
+  const el = $('priorStatsStatus');
+  const clearBtn = $('clearPriorStatsBtn');
+  if (state.priorCounts) {
+    const meta = state.priorMeta || {};
+    el.innerHTML = '<div class="ok">✓ Ενεργό — βάση από ' + escapeAttr(meta.dateLabel || 'προηγούμενη εβδομάδα') +
+      ' (' + state.priorCounts.size + ' εκπαιδευτικοί). Οι νέες τοποθετήσεις λαμβάνουν υπόψη και αυτές τις μετρήσεις.</div>';
+    clearBtn.hidden = false;
+  } else {
+    el.innerHTML = '<div style="color:var(--muted, #6b7280); font-size:13px;">Καμία εισαγωγή — η δίκαιη κατανομή υπολογίζεται μόνο μέσα στην τρέχουσα εβδομάδα.</div>';
+    clearBtn.hidden = true;
+  }
+}
+
+function applyPriorCounts(counts, meta) {
+  state.priorCounts = counts;
+  state.priorMeta = meta || null;
+  renderPriorStatsStatus();
+  if (state.model) {
+    state.assignments = {};
+    runAssignmentsForAllDays();
+    renderResults();
+    setStatus('Οι τοποθετήσεις ξαναέγιναν με βάση τις εισαγόμενες μετρήσεις.');
+  }
+}
+
+$('priorStatsInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || typeof data !== 'object' || !data.counts || typeof data.counts !== 'object') {
+        throw new Error('Το αρχείο δεν έχει την αναμενόμενη μορφή στατιστικών εφημεριών.');
+      }
+      const counts = new Map(Object.entries(data.counts).map(([k, v]) => [k, Number(v) || 0]));
+      applyPriorCounts(counts, { dateLabel: data.dateLabel || '', generatedAt: data.generatedAt || '' });
+    } catch (err) {
+      $('priorStatsStatus').innerHTML = '<div class="err">✗ Δεν ήταν δυνατή η ανάγνωση: ' + escapeAttr(err.message || String(err)) + '</div>';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+$('clearPriorStatsBtn').addEventListener('click', () => {
+  applyPriorCounts(null, null);
+});
+
+renderPriorStatsStatus();
+
+/* ---------- full session save/load (resume a previous edit later) ---------- */
+
+const SESSION_FILE_TYPE = 'efimeries-session-v1';
+
+/* Shows the settings/footnote/stats cards and the action bar, and syncs every
+   form field/switch to the current `state` — shared by "loaded an .xlsx" and
+   "restored a saved session" so both end up in the exact same UI state. */
+function revealMainUI() {
+  $('settingsCard').hidden = false;
+  $('footnoteCard').hidden = false;
+  $('statsCard').hidden = false;
+  $('actionbar').hidden = false;
+  $('schoolInput').value = state.school;
+  $('dateInput').value = state.dateLabel;
+  $('exclusionInput').value = state.exclusions.join('\n');
+  $('footnote').value = state.footnote;
+  setSwitch('eaeSwitch', state.includeEAE);
+  setSwitch('dblSwitch', state.avoidDoubleShift);
+  renderPosTable();
+  renderDayExclusions();
+  renderLightLoad();
+  renderCombat();
+  renderMaxDays();
+  renderResults();
+  renderPriorStatsStatus();
+}
+
+/* Sets a switch's visual/aria state directly (no toggle), for restoring a
+   saved value — as opposed to toggleSwitch(), which flips on user click. */
+function setSwitch(id, on) {
+  const el = $(id);
+  el.classList.toggle('on', !!on);
+  el.setAttribute('aria-checked', String(!!on));
+}
+
+/* Everything needed to resume exactly where the user left off, without
+   re-uploading the original .xlsx: the parsed model (so reshuffle/edits and
+   the error checks keep working), the current assignments (including any
+   manual corrections), and every setting. */
+function buildSessionPayload() {
+  return {
+    type: SESSION_FILE_TYPE,
+    generatedAt: new Date().toISOString(),
+    model: state.model,
+    school: state.school,
+    dateLabel: state.dateLabel,
+    includeEAE: state.includeEAE,
+    avoidDoubleShift: state.avoidDoubleShift,
+    exclusions: state.exclusions,
+    dayExclusions: state.dayExclusions,
+    lightLoad: state.lightLoad,
+    combat: state.combat,
+    maxDays: state.maxDays,
+    positions: state.positions,
+    dayTimes: state.dayTimes,
+    assignments: state.assignments,
+    footnote: state.footnote,
+    priorCounts: state.priorCounts ? Object.fromEntries(state.priorCounts) : null,
+    priorMeta: state.priorMeta || null,
+  };
+}
+
+function applySessionPayload(data) {
+  if (!data || typeof data !== 'object' || data.type !== SESSION_FILE_TYPE || !data.model) {
+    throw new Error('Το αρχείο δεν έχει την αναμενόμενη μορφή αποθηκευμένης επεξεργασίας.');
+  }
+  state.model = data.model;
+  state.school = data.school || '';
+  state.dateLabel = data.dateLabel || '';
+  state.includeEAE = !!data.includeEAE;
+  state.avoidDoubleShift = data.avoidDoubleShift !== false;
+  state.exclusions = Array.isArray(data.exclusions) ? data.exclusions : DEFAULT_EXCLUSIONS.slice();
+  state.lightLoad = Array.isArray(data.lightLoad) ? data.lightLoad : [];
+  state.combat = Array.isArray(data.combat) ? data.combat : [];
+  state.maxDays = (data.maxDays && typeof data.maxDays === 'object') ? data.maxDays : {};
+  state.dayExclusions = (data.dayExclusions && typeof data.dayExclusions === 'object') ? data.dayExclusions : {};
+  state.positions = Array.isArray(data.positions) && data.positions.length ? data.positions : state.positions;
+  state.dayTimes = data.dayTimes || {};
+  state.assignments = data.assignments || {};
+  state.footnote = typeof data.footnote === 'string' ? data.footnote : DEFAULT_FOOTNOTE;
+  state.priorCounts = data.priorCounts ? new Map(Object.entries(data.priorCounts)) : null;
+  state.priorMeta = data.priorMeta || null;
+
+  $('dzMain').textContent = 'Πρόγραμμα από αποθηκευμένη επεξεργασία';
+  $('dzSub').textContent = 'Μπορείς να ανεβάσεις κι άλλο αρχείο .xlsx όποτε θες';
+  $('parseStatus').innerHTML =
+    '<div class="ok">✓ Επαναφέρθηκαν ' + state.model.teachers.length + ' εκπαιδευτικοί και ' + state.model.days.length + ' ημέρες από αποθηκευμένη επεξεργασία' +
+    (data.generatedAt ? (' (' + new Date(data.generatedAt).toLocaleString('el-GR') + ')') : '') + '.</div>' +
+    '<div class="chips">' + state.model.days.map(d => '<span class="chip">' + d + '</span>').join('') + '</div>';
+
+  revealMainUI();
+  setStatus('Επεξεργασία επαναφέρθηκε. Έλεγξε τις τοποθετήσεις πριν τη λήψη.');
+}
+
+$('saveSessionBtn').addEventListener('click', async () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const btn = $('saveSessionBtn');
+  btn.disabled = true;
+  try {
+    const payload = buildSessionPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const safeDate = dateStampForFilename();
+    const filename = 'Εφημερίες_' + safeDate + '.json';
+    setStatus(await saveGeneratedFile(blob, filename, {
+      description: 'Αποθηκευμένη επεξεργασία εφημεριών (JSON)',
+      accept: { 'application/json': ['.json'] },
+    }));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('sessionInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      applySessionPayload(JSON.parse(reader.result));
+      $('sessionStatus').innerHTML = '';
+    } catch (err) {
+      $('sessionStatus').innerHTML = '<div class="err">✗ Δεν ήταν δυνατή η ανάγνωση: ' + escapeAttr(err.message || String(err)) + '</div>';
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ---------- rendering: day boards ---------- */
+
+/* Tally duties already assigned this week (from state.assignments) for every
+   day except `excludeDay`, so a single-day reshuffle stays fair relative to
+   the rest of the currently-loaded week — plus, if the user imported a
+   previous week's exported stats (state.priorCounts), those counts too, so
+   fairness can span multiple weeks when the user opts into that. Without an
+   import, this is scoped to the current week only, exactly as before. */
+function computeWeekCounts(excludeDay) {
+  const counts = new Map(state.priorCounts || []);
+  Object.keys(state.assignments).forEach(day => {
+    if (day === excludeDay) return;
+    const a = state.assignments[day];
+    if (!a) return;
+    a.slotsA.flat().concat(a.slotsB.flat()).forEach(n => counts.set(n, (counts.get(n) || 0) + 1));
+  });
+  return counts;
+}
+
+/* Πόσες διαφορετικές ημέρες έχει ήδη εφημερία ο καθένας, εκτός της ημέρας `excludeDay`. */
+function computeDaysUsed(excludeDay) {
+  const used = new Map();
+  Object.keys(state.assignments).forEach(day => {
+    if (day === excludeDay) return;
+    const a = state.assignments[day];
+    if (!a) return;
+    new Set(a.slotsA.flat().concat(a.slotsB.flat())).forEach(n => used.set(n, (used.get(n) || 0) + 1));
+  });
+  return used;
+}
+
+function runAssignment(dayName, priorCounts, daysUsed) {
+  state.assignments[dayName] = assignDay(state.model, dayName, {
+    exclusionList: state.exclusions,
+    dayExcludedNames: state.dayExclusions[dayName] || [],
+    lightLoadNames: state.lightLoad,
+    combatNames: state.combat,
+    maxDays: state.maxDays,
+    daysUsed: daysUsed !== undefined ? daysUsed : computeDaysUsed(dayName),
+    includeEAE: state.includeEAE,
+    avoidDoubleShift: state.avoidDoubleShift,
+    positions: state.positions,
+    priorCounts: priorCounts !== undefined ? priorCounts : computeWeekCounts(dayName),
+  });
+}
+
+/* Assign every day of the week in one pass, carrying an accumulating duty
+   count from day to day so the whole week ends up evenly spread ("ίση
+   κατανομή") with only rare, structurally-forced exceptions (e.g. a
+   teacher eligible on very few days/periods). If a previous week's stats
+   were imported (state.priorCounts), the count starts from there instead
+   of zero, so the fairness spans multiple weeks. */
+function runAssignmentsForAllDays() {
+  const counts = new Map(state.priorCounts || []);
+  const daysUsed = new Map();
+  state.model.days.forEach(dayName => {
+    runAssignment(dayName, counts, daysUsed);
+    const a = state.assignments[dayName];
+    const all = a.slotsA.flat().concat(a.slotsB.flat());
+    all.forEach(n => counts.set(n, (counts.get(n) || 0) + 1));
+    new Set(all).forEach(n => daysUsed.set(n, (daysUsed.get(n) || 0) + 1));
+  });
+}
+
+/* ---------- statistics & error checking ---------- */
+
+function findTeacher(name) {
+  const n = normGr(name);
+  return state.model.teachers.find(t => normGr(t.name) === n) || null;
+}
+
+function computeStats() {
+  const eligible = state.model.teachers.filter(t =>
+    !isExcluded(t.name, state.exclusions) && (state.includeEAE || !isEAE(t.specialty)));
+  const counts = new Map();
+  eligible.forEach(t => counts.set(t.name, 0));
+
+  const issues = [];
+  const where = (day, shift, posLabel) => day + ' · ' + (shift === 'A' ? 'Α΄ βάρδια' : 'Β΄ βάρδια') + (posLabel ? ' · «' + posLabel + '»' : '');
+
+  state.model.days.forEach(dayName => {
+    const a = state.assignments[dayName];
+    if (!a) return;
+    ['A', 'B'].forEach(shift => {
+      const slots = shift === 'A' ? a.slotsA : a.slotsB;
+      const seen = new Map();
+      state.positions.forEach((p, i) => {
+        const names = slots[i] || [];
+        const need = shift === 'A' ? p.countA : p.countB;
+        if (names.length < need) {
+          issues.push({ level: 'warn', text: 'Λείπουν ' + (need - names.length) + ' άτομο/α από τη θέση «' + p.label + '» (' + where(dayName, shift) + ').' });
+        }
+        names.forEach(name => {
+          if (seen.has(name)) {
+            issues.push({ level: 'error', text: 'Ο/Η «' + name + '» εμφανίζεται δύο φορές στην ίδια βάρδια (' + where(dayName, shift) + ').' });
+          }
+          seen.set(name, i);
+
+          const teacher = findTeacher(name);
+          if (!teacher) {
+            issues.push({ level: 'error', text: 'Άγνωστο όνομα «' + name + '» (' + where(dayName, shift, p.label) + ') — έλεγξε μήπως είναι τυπογραφικό λάθος.' });
+            return;
+          }
+          if (counts.has(teacher.name)) counts.set(teacher.name, counts.get(teacher.name) + 1);
+          if (state.combat.indexOf(teacher.name) !== -1 && (i === 1 || i === 3)) {
+            issues.push({ level: 'warn', text: 'Ο/Η «' + teacher.name + '» είναι στους «μάχιμους» (μόνο ισόγειο ή 3ος όροφος) αλλά τοποθετήθηκε στη θέση «' + p.label + '» (' + where(dayName, shift) + ').' });
+          }
+          if ((state.dayExclusions[dayName] || []).indexOf(teacher.name) !== -1) {
+            issues.push({ level: 'error', text: 'Ο/Η «' + teacher.name + '» έχει εξαιρεθεί για την ημέρα ' + dayName + ' αλλά έχει τοποθετηθεί (' + where(dayName, shift, p.label) + ').' });
+          }
+          if (isExcluded(teacher.name, state.exclusions)) {
+            issues.push({ level: 'error', text: 'Ο/Η «' + teacher.name + '» είναι στη λίστα μόνιμων εξαιρέσεων αλλά έχει τοποθετηθεί (' + where(dayName, shift, p.label) + ').' });
+          }
+          if (!state.includeEAE && isEAE(teacher.specialty)) {
+            issues.push({ level: 'warn', text: 'Ο/Η «' + teacher.name + '» έχει ΕΑΕ ειδικότητα αλλά η συμπερίληψη ΕΑΕ είναι απενεργοποιημένη (' + where(dayName, shift, p.label) + ').' });
+          }
+          const elig = teacher.days[dayName];
+          const ok = shift === 'A' ? !!(elig && elig.p1) : !!(elig && elig.p6);
+          if (!ok) {
+            issues.push({ level: 'error', text: 'Ο/Η «' + teacher.name + '» δεν έχει μάθημα ' + (shift === 'A' ? '1η' : '6η') + ' ώρα ' + dayName + ' — πιθανώς δεν βρίσκεται στο σχολείο (' + where(dayName, shift, p.label) + ').' });
+          }
+        });
+      });
+    });
+    if (state.avoidDoubleShift && a.slotsA && a.slotsB) {
+      const namesA = new Set(a.slotsA.flat());
+      a.slotsB.flat().forEach(name => {
+        if (namesA.has(name)) {
+          issues.push({ level: 'warn', text: 'Ο/Η «' + name + '» τοποθετήθηκε και στις δύο βάρδιες την ίδια ημέρα (' + dayName + '), ενώ η αποφυγή διπλής εφημερίας είναι ενεργή.' });
+        }
+      });
+    }
+  });
+
+  // Όριο ημερών ανά εκπαιδευτικό
+  const dayCount = new Map();
+  state.model.days.forEach(dayName => {
+    const a = state.assignments[dayName];
+    if (!a) return;
+    new Set(a.slotsA.flat().concat(a.slotsB.flat())).forEach(n => dayCount.set(n, (dayCount.get(n) || 0) + 1));
+  });
+  Object.keys(state.maxDays).forEach(n => {
+    if ((dayCount.get(n) || 0) > state.maxDays[n]) {
+      issues.push({ level: 'warn', text: 'Ο/Η «' + n + '» έχει όριο ' + state.maxDays[n] + ' ημέρες εφημερίας αλλά τοποθετήθηκε σε ' + dayCount.get(n) + ' (δεν υπήρχαν αρκετοί άλλοι διαθέσιμοι).' });
+    }
+  });
+
+  return { counts, issues };
+}
+
+function renderStats() {
+  if (!state.model) return;
+  const { counts, issues } = computeStats();
+  const errors = issues.filter(i => i.level === 'error');
+  const warns = issues.filter(i => i.level === 'warn');
+
+  const summary = $('statsSummary');
+  if (issues.length === 0) {
+    summary.innerHTML = '<div class="ok">✓ Δεν εντοπίστηκε κανένα πρόβλημα στις τρέχουσες τοποθετήσεις.</div>';
+  } else {
+    summary.innerHTML =
+      (errors.length ? '<div class="err">✗ ' + errors.length + ' ' + (errors.length === 1 ? 'σφάλμα' : 'σφάλματα') + ' προς έλεγχο</div>' : '') +
+      (warns.length ? '<div class="warnbox">⚠ ' + warns.length + ' ' + (warns.length === 1 ? 'προειδοποίηση' : 'προειδοποιήσεις') + '</div>' : '');
+  }
+
+  $('statsIssues').innerHTML = issues
+    .sort((x, y) => (x.level === y.level ? 0 : x.level === 'error' ? -1 : 1))
+    .map(i => '<div class="issue-row ' + i.level + '">' + (i.level === 'error' ? '✗ ' : '⚠ ') + escapeAttr(i.text) + '</div>').join('');
+
+  const rows = Array.from(counts.entries()).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0], 'el'));
+
+  const head = $('statsTableHead');
+  if (state.priorCounts) {
+    // Cross-week fairness is active: show this week's count next to the running
+    // total (imported base + this week), and bar/sort the distribution by the total.
+    head.innerHTML = '<tr><th>Εκπαιδευτικός</th><th>Ειδικότητα</th><th style="text-align:center;">Αυτή η εβδομάδα</th><th style="text-align:center;">Σύνολο</th><th>Κατανομή (σύνολο)</th></tr>';
+    const totals = rows.map(([name, weekCount]) => [name, weekCount, (state.priorCounts.get(name) || 0) + weekCount]);
+    totals.sort((x, y) => y[2] - x[2] || x[0].localeCompare(y[0], 'el'));
+    const max = Math.max(1, ...totals.map(r => r[2]));
+    $('statsTableBody').innerHTML = totals.map(([name, weekCount, total]) => {
+      const t = state.model.teachers.find(x => x.name === name);
+      const pct = Math.round((total / max) * 100);
+      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
+        '<td class="stat-count' + (weekCount === 0 ? ' stat-zero' : '') + '">' + weekCount + '</td>' +
+        '<td class="stat-count' + (total === 0 ? ' stat-zero' : '') + '">' + total + '</td>' +
+        '<td><div class="stat-bar"><div class="stat-bar-fill" style="width:' + pct + '%"></div></div></td></tr>';
+    }).join('');
+  } else {
+    head.innerHTML = '<tr><th>Εκπαιδευτικός</th><th>Ειδικότητα</th><th style="text-align:center;">Πλήθος</th><th>Κατανομή</th></tr>';
+    const max = Math.max(1, ...rows.map(r => r[1]));
+    $('statsTableBody').innerHTML = rows.map(([name, count]) => {
+      const t = state.model.teachers.find(x => x.name === name);
+      const pct = Math.round((count / max) * 100);
+      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
+        '<td class="stat-count' + (count === 0 ? ' stat-zero' : '') + '">' + count + '</td>' +
+        '<td><div class="stat-bar"><div class="stat-bar-fill" style="width:' + pct + '%"></div></div></td></tr>';
+    }).join('');
+  }
+}
+
+function renderResults() {
+  if (!state.model) return; // leave the static empty-state markup untouched
+  const results = $('results');
+  results.innerHTML = '';
+  state.model.days.forEach(dayName => {
+    results.appendChild(renderBoard(dayName));
+  });
+  renderStats();
+}
+
+function renderBoard(dayName) {
+  const a = state.assignments[dayName];
+  const times = state.dayTimes[dayName] || defaultTimeFor(dayName);
+  const board = document.createElement('div');
+  board.className = 'board';
+
+  const head = document.createElement('div');
+  head.className = 'board-head';
+  head.innerHTML = '<div class="day">' + dayName + '</div>' +
+    '<button class="reshuffle" type="button" data-day="' + escapeAttr(dayName) + '">' +
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>Ανακατανομή</button>';
+  board.appendChild(head);
+  head.querySelector('.reshuffle').addEventListener('click', () => {
+    runAssignment(dayName);
+    const fresh = renderBoard(dayName);
+    board.replaceWith(fresh);
+    renderStats();
+  });
+
+  const body = document.createElement('div');
+  body.className = 'board-body';
+  body.appendChild(renderShiftCol(dayName, 'A', times.a, a));
+  body.appendChild(renderShiftCol(dayName, 'B', times.b, a));
+  board.appendChild(body);
+  return board;
+}
+
+function renderShiftCol(dayName, shift, time, a) {
+  const col = document.createElement('div');
+  col.className = 'shift-col';
+  const listId = 'dl-' + shift + '-' + dayName.replace(/\s+/g, '');
+  const pool = shift === 'A' ? a.poolA : a.poolB;
+  const slots = shift === 'A' ? a.slotsA : a.slotsB;
+  const leftover = shift === 'A' ? a.leftoverA : a.leftoverB;
+  const needed = shift === 'A' ? a.countA : a.countB;
+
+  let html = '<div class="shift-head"><span class="shift-dot ' + (shift === 'A' ? 'a' : 'b') + '"></span><b>' + (shift === 'A' ? 'Α΄ βάρδια' : 'Β΄ βάρδια') + '</b>' +
+    '<input class="time" type="text" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" value="' + escapeAttr(time) + '"></div>';
+
+  state.positions.forEach((p, i) => {
+    const val = (slots[i] || []).join(' – ');
+    html += '<div class="pos-row"><div class="pos-label">' + escapeAttr(p.label) + '</div>' +
+      '<input type="text" list="' + listId + '" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '" value="' + escapeAttr(val) + '"></div>';
+  });
+
+  html += '<datalist id="' + listId + '">' + pool.map(n => '<option value="' + escapeAttr(n) + '">').join('') + '</datalist>';
+
+  if (pool.length < needed) {
+    html += '<div class="short-warn">Διαθέσιμοι ' + pool.length + ' από ' + needed + ' θέσεις — κάποιες θέσεις θα μείνουν κενές ή χρειάζονται χειροκίνητη συμπλήρωση.</div>';
+  }
+  if (leftover.length) {
+    html += '<div class="leftover"><b>Λοιποί διαθέσιμοι:</b> ' + leftover.map(escapeAttr).join(', ') + '</div>';
+  }
+  col.innerHTML = html;
+
+  col.querySelectorAll('input.time').forEach(el => el.addEventListener('input', e => {
+    const d = e.target.dataset.day, s = e.target.dataset.shift;
+    if (!state.dayTimes[d]) state.dayTimes[d] = defaultTimeFor(d);
+    state.dayTimes[d][s.toLowerCase()] = e.target.value;
+  }));
+  col.querySelectorAll('.pos-row input[type="text"]').forEach(el => el.addEventListener('input', e => {
+    const d = e.target.dataset.day, s = e.target.dataset.shift, pos = +e.target.dataset.pos;
+    const names = e.target.value.split(/[–,\/]/).map(x => x.trim()).filter(Boolean);
+    const key = s === 'A' ? 'slotsA' : 'slotsB';
+    state.assignments[d][key][pos] = names;
+    renderStats();
+  }));
+
+  return col;
+}
+
+/* ---------- file parsing ---------- */
+
+const fileInput = $('fileInput');
+const dropzone = $('dropzone');
+dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
+['dragover', 'dragenter'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+['dragleave', 'drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+dropzone.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  $('dzMain').textContent = file.name;
+  $('dzSub').textContent = 'Ανάλυση…';
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = new Uint8Array(reader.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const model = parseWorkbook(XLSX, wb);
+      state.model = model;
+      state.school = model.school || state.school;
+      state.dateLabel = model.dateLabel || state.dateLabel;
+      $('schoolInput').value = state.school;
+      $('dateInput').value = state.dateLabel;
+      state.dayTimes = {};
+      model.days.forEach(d => { state.dayTimes[d] = defaultTimeFor(d); });
+      state.assignments = {};
+      state.dayExclusions = {};
+      state.lightLoad = state.lightLoad.filter(n => model.teachers.some(t => t.name === n));
+      state.combat = state.combat.filter(n => model.teachers.some(t => t.name === n));
+      Object.keys(state.maxDays).forEach(n => { if (!model.teachers.some(t => t.name === n)) delete state.maxDays[n]; });
+      runAssignmentsForAllDays();
+
+      $('dzSub').textContent = 'Επιτυχής ανάλυση — μπορείς να ανεβάσεις άλλο αρχείο όποτε θες';
+      $('parseStatus').innerHTML =
+        '<div class="ok">✓ Βρέθηκαν ' + model.teachers.length + ' εκπαιδευτικοί και ' + model.days.length + ' ημέρες.</div>' +
+        '<div class="chips">' + model.days.map(d => '<span class="chip">' + d + '</span>').join('') + '</div>';
+
+      revealMainUI();
+      setStatus('Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.');
+    } catch (err) {
+      $('dzSub').textContent = 'Ανέβασε αρχείο προγράμματος (.xlsx)';
+      $('parseStatus').innerHTML = '<div class="err">✗ ' + escapeAttr(err.message || String(err)) + '</div>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ---------- global actions ---------- */
+
+$('regenBtn').addEventListener('click', () => {
+  if (!state.model) return;
+  state.assignments = {};
+  runAssignmentsForAllDays();
+  renderResults();
+  setStatus('Νέα τοποθέτηση για όλες τις ημέρες.');
+});
+
+function setStatus(msg) { $('statusText').textContent = msg; }
+
+let downloadsApi = null;
+(function initDownloads() {
+  try {
+    if (window.claude && typeof window.claude.use === 'function') {
+      window.claude.use('downloads').then(ns => { downloadsApi = ns; }).catch(() => { downloadsApi = null; });
+    }
+  } catch (e) { downloadsApi = null; }
+})();
+
+function fallbackDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/*
+ * Browsers won't let a web page silently write to an arbitrary folder on
+ * disk (security sandbox) — there is no way to auto-detect "the folder
+ * this HTML file lives in" and just save there. The closest, honest
+ * approximation: when the File System Access API is available (Chrome/
+ * Edge, incl. when this file is opened directly from disk), open the
+ * native "Save As" dialog so the user can pick that folder themselves —
+ * the browser then remembers that folder and defaults to it next time,
+ * so after the first save it effectively "always saves next to the app".
+ * Returns 'saved' | 'cancelled' | 'unsupported'.
+ */
+async function saveWithPicker(blob, filename, pickerType) {
+  if (typeof window.showSaveFilePicker !== 'function') return 'unsupported';
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: filename,
+      types: [pickerType || {
+        description: 'Έγγραφο Word',
+        accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] },
+      }],
+    });
+    const writable = await handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return 'saved';
+  } catch (err) {
+    if (err && err.name === 'AbortError') return 'cancelled';
+    return 'unsupported';
+  }
+}
+
+/* Shared save flow for any generated file: claude.ai's downloads capability when
+   available, else a native "Save As" (see saveWithPicker above), else a plain
+   browser download. Returns a short status message in Greek to show the user. */
+async function saveGeneratedFile(blob, filename, pickerType) {
+  if (downloadsApi) {
+    try {
+      await downloadsApi.save({ filename, data: blob });
+      return 'Το αρχείο αποθηκεύτηκε.';
+    } catch (err) {
+      if (err && err.code === 'declined') return 'Η λήψη ακυρώθηκε.';
+      fallbackDownload(blob, filename);
+      return 'Το αρχείο κατέβηκε.';
+    }
+  }
+  const result = await saveWithPicker(blob, filename, pickerType);
+  if (result === 'saved') return 'Το αρχείο αποθηκεύτηκε στον φάκελο που επέλεξες.';
+  if (result === 'cancelled') return 'Η αποθήκευση ακυρώθηκε.';
+  fallbackDownload(blob, filename);
+  return 'Το αρχείο κατέβηκε στον φάκελο λήψεων του browser (ο browser σου δεν υποστηρίζει επιλογή φακέλου).';
+}
+
+$('downloadBtn').addEventListener('click', async () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const btn = $('downloadBtn');
+  btn.disabled = true;
+  setStatus('Δημιουργία εγγράφου…');
+  try {
+    const days = state.model.days.map(dayName => {
+      const times = state.dayTimes[dayName] || defaultTimeFor(dayName);
+      const a = state.assignments[dayName];
+      return {
+        name: dayName,
+        timeA: times.a,
+        timeB: times.b,
+        positions: state.positions.map((p, i) => ({
+          label: p.label,
+          slotsA: (a.slotsA[i] || []),
+          slotsB: (a.slotsB[i] || []),
+        })),
+      };
+    });
+    const model = {
+      school: state.school || (state.model.school || ''),
+      dateLabel: state.dateLabel || (state.model.dateLabel || ''),
+      days,
+      footnote: state.footnote,
+    };
+    const blob = await buildDocxBytes(model);
+    const safeDate = dateStampForFilename();
+    const filename = 'Εφημερίες_' + safeDate + '.docx';
+    setStatus(await saveGeneratedFile(blob, filename));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$('exportStatsBtn').addEventListener('click', async () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const btn = $('exportStatsBtn');
+  btn.disabled = true;
+  try {
+    // Cumulative = whatever base was imported, plus this week's placements — so
+    // re-importing this same file next week continues the running total.
+    const cumulative = new Map(state.priorCounts || []);
+    computeStats().counts.forEach((v, k) => cumulative.set(k, (cumulative.get(k) || 0) + v));
+    const payload = {
+      type: PRIOR_STATS_FILE_TYPE,
+      generatedAt: new Date().toISOString(),
+      dateLabel: state.dateLabel || (state.model.dateLabel || ''),
+      counts: Object.fromEntries(cumulative),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const safeDate = dateStampForFilename();
+    const filename = 'Στατιστικά_' + safeDate + '.json';
+    setStatus(await saveGeneratedFile(blob, filename, {
+      description: 'Στατιστικά εφημεριών (JSON)',
+      accept: { 'application/json': ['.json'] },
+    }));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---------- ιστορικό στατιστικών (αποθηκεύεται σε αυτό τον browser) + Excel ---------- */
+
+const HISTORY_KEY = 'efimeries-history-v1';
+const HISTORY_FILE_TYPE = 'efimeries-history-v1';
+
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    const a = raw ? JSON.parse(raw) : [];
+    return Array.isArray(a) ? a.filter(e => e && Array.isArray(e.rows)) : [];
+  } catch (e) { return []; }
+}
+function storeHistory(list) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); return true; } catch (e) { return false; }
+}
+let historyMemory = null; // εφεδρικό όταν ο browser δεν επιτρέπει αποθήκευση
+function getHistory() { return historyMemory || loadHistory(); }
+function setHistory(list) { if (!storeHistory(list)) historyMemory = list; else historyMemory = null; }
+
+function setHistoryStatus(html) { $('historyStatus').innerHTML = html || ''; }
+
+function entryLabel(e) {
+  const lab = (e.dateLabel || '').trim();
+  const d = e.savedAt ? new Date(e.savedAt).toLocaleDateString('el-GR') : '';
+  return lab || ('Αποθήκευση ' + d);
+}
+
+function buildStatsSnapshot() {
+  const stats = computeStats();
+  const prior = state.priorCounts || new Map();
+  const dayCount = new Map();
+  state.model.days.forEach(d => {
+    const a = state.assignments[d];
+    if (!a) return;
+    new Set(a.slotsA.flat().concat(a.slotsB.flat())).forEach(n => dayCount.set(n, (dayCount.get(n) || 0) + 1));
+  });
+  const names = new Set(Array.from(stats.counts.keys()).concat(Array.from(prior.keys())));
+  const rows = [];
+  names.forEach(name => {
+    const t = findTeacher(name);
+    const wk = stats.counts.has(name) ? stats.counts.get(name) : 0;
+    rows.push({
+      name,
+      specialty: t ? (t.specialty || '') : '',
+      week: wk,
+      days: dayCount.get(name) || 0,
+      cumulative: wk + (prior.get(name) || 0),
+    });
+  });
+  rows.sort((a, b) => b.cumulative - a.cumulative || a.name.localeCompare(b.name, 'el'));
+  return {
+    id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    savedAt: new Date().toISOString(),
+    dateLabel: state.dateLabel || (state.model.dateLabel || ''),
+    rows,
+  };
+}
+
+function entryRowsAoa(e) {
+  const head = ['Εκπαιδευτικός', 'Ειδικότητα', 'Εφημερίες εβδομάδας', 'Ημέρες εφημερίας', 'Σωρευτικά'];
+  const body = e.rows.map(r => [r.name, r.specialty || '', r.week == null ? '' : r.week, r.days == null ? '' : r.days, r.cumulative]);
+  const tw = e.rows.reduce((a, r) => a + (r.week || 0), 0);
+  const tc = e.rows.reduce((a, r) => a + (r.cumulative || 0), 0);
+  return [head].concat(body, [['ΣΥΝΟΛΟ', '', tw, '', tc]]);
+}
+
+function safeSheetName(name, used) {
+  let n = String(name || 'Φύλλο').replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 28) || 'Φύλλο';
+  let out = n, k = 2;
+  while (used.has(out)) out = n.slice(0, 26) + ' ' + (k++);
+  used.add(out);
+  return out;
+}
+
+function makeSheet(aoa, widths) {
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = widths.map(w => ({ wch: w }));
+  return ws;
+}
+
+function workbookForEntries(entries) {
+  const wb = XLSX.utils.book_new();
+  const used = new Set();
+  if (entries.length > 1) {
+    const names = [];
+    const seen = new Set();
+    entries.forEach(e => e.rows.forEach(r => { if (!seen.has(r.name)) { seen.add(r.name); names.push(r.name); } }));
+    const spec = new Map();
+    entries.forEach(e => e.rows.forEach(r => { if (r.specialty) spec.set(r.name, r.specialty); }));
+    const head = ['Εκπαιδευτικός', 'Ειδικότητα'].concat(entries.map(entryLabel), ['Σύνολο εβδομάδων']);
+    const body = names.sort((a, b) => a.localeCompare(b, 'el')).map(n => {
+      const vals = entries.map(e => { const r = e.rows.find(x => x.name === n); return r && r.week != null ? r.week : ''; });
+      const total = vals.reduce((a, v) => a + (typeof v === 'number' ? v : 0), 0);
+      return [n, spec.get(n) || ''].concat(vals, [total]);
+    });
+    XLSX.utils.book_append_sheet(wb, makeSheet([head].concat(body), [30, 22].concat(entries.map(() => 14), [16])), safeSheetName('Συγκεντρωτικό', used));
+  }
+  entries.forEach(e => {
+    XLSX.utils.book_append_sheet(wb, makeSheet(entryRowsAoa(e), [30, 22, 20, 18, 12]), safeSheetName(entryLabel(e), used));
+  });
+  return wb;
+}
+
+async function saveWorkbook(wb, filename) {
+  const arr = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([arr], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return saveGeneratedFile(blob, filename, {
+    description: 'Στατιστικά εφημεριών (Excel)',
+    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] },
+  });
+}
+
+function todayStamp() {
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  return pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear();
+}
+
+function renderHistory() {
+  const list = getHistory();
+  const host = $('historyList');
+  $('histExcelAllBtn').hidden = !list.length;
+  $('histJsonAllBtn').hidden = !list.length;
+  if (!list.length) {
+    host.innerHTML = '<div style="color:var(--ink-muted); font-size:13px; padding:4px 0;">Δεν υπάρχουν αποθηκευμένα στατιστικά ακόμα.</div>';
+    return;
+  }
+  const ordered = list.slice().sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  host.innerHTML = ordered.map(e => {
+    const tot = e.rows.reduce((a, r) => a + (r.week || 0), 0);
+    const when = e.savedAt ? new Date(e.savedAt).toLocaleString('el-GR') : '';
+    const bs = 'font-size:12.5px; padding:6px 10px;';
+    return '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 0; border-top:1px solid var(--line-soft);">' +
+      '<div style="flex:1; min-width:170px;"><div style="font-weight:600; font-size:13.5px;">' + escHtml(entryLabel(e)) + '</div>' +
+      '<div style="font-size:12px; color:var(--ink-muted);">' + e.rows.length + ' εκπαιδευτικοί' + (tot ? ' · ' + tot + ' εφημερίες' : '') + ' · ' + escHtml(when) + '</div></div>' +
+      '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="view" data-id="' + escHtml(e.id) + '">Προβολή</button>' +
+      '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="xlsx" data-id="' + escHtml(e.id) + '">Excel</button>' +
+      '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="base" data-id="' + escHtml(e.id) + '">Χρήση ως βάση</button>' +
+      '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="del" data-id="' + escHtml(e.id) + '" aria-label="Διαγραφή">×</button>' +
+      '</div>';
+  }).join('');
+}
+
+function showHistoryEntry(e) {
+  const rows = e.rows.map(r => '<tr><td>' + escHtml(r.name) + '</td><td>' + escHtml(r.specialty) + '</td>' +
+    '<td style="text-align:center;">' + (r.week == null ? '–' : r.week) + '</td>' +
+    '<td style="text-align:center;">' + (r.days == null ? '–' : r.days) + '</td>' +
+    '<td style="text-align:center; font-weight:700;">' + r.cumulative + '</td></tr>').join('');
+  $('historyView').innerHTML = '<div style="font-weight:600; font-size:13.5px; margin-bottom:6px;">' + escHtml(entryLabel(e)) + '</div>' +
+    '<table class="tpl"><thead><tr><th>Εκπαιδευτικός</th><th>Ειδικότητα</th><th style="text-align:center;">Εβδομάδα</th><th style="text-align:center;">Ημέρες</th><th style="text-align:center;">Σωρευτικά</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+$('historyList').addEventListener('click', async ev => {
+  const btn = ev.target.closest('button[data-act]');
+  if (!btn) return;
+  const list = getHistory();
+  const e = list.find(x => x.id === btn.dataset.id);
+  if (!e) return;
+  const act = btn.dataset.act;
+  try {
+    if (act === 'view') {
+      showHistoryEntry(e);
+    } else if (act === 'xlsx') {
+      setHistoryStatus('');
+      const msg = await saveWorkbook(workbookForEntries([e]), 'Στατιστικά_' + (entryLabel(e).replace(/\s+/g, '_').replace(/[\\\/:*?"<>|]/g, '-')) + '.xlsx');
+      setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
+    } else if (act === 'base') {
+      const m = new Map();
+      e.rows.forEach(r => { if (r.cumulative) m.set(r.name, r.cumulative); });
+      applyPriorCounts(m, { dateLabel: entryLabel(e), generatedAt: e.savedAt, teacherCount: m.size });
+      setHistoryStatus('<div class="ok">✓ Το «' + escHtml(entryLabel(e)) + '» ορίστηκε ως βάση για τη δίκαιη κατανομή' + (state.model ? ' και έγινε νέα τοποθέτηση.' : ' (θα εφαρμοστεί όταν ανεβάσεις πρόγραμμα).') + '</div>');
+    } else if (act === 'del') {
+      setHistory(list.filter(x => x.id !== e.id));
+      $('historyView').innerHTML = '';
+      renderHistory();
+      setHistoryStatus('<div class="ok">Διαγράφηκε.</div>');
+    }
+  } catch (err) {
+    setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>');
+  }
+});
+
+$('saveHistoryBtn').addEventListener('click', () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const snap = buildStatsSnapshot();
+  const list = getHistory();
+  const lab = (snap.dateLabel || '').trim();
+  const idx = lab ? list.findIndex(x => (x.dateLabel || '').trim() === lab) : -1;
+  if (idx >= 0) { snap.id = list[idx].id; list[idx] = snap; } else { list.push(snap); }
+  setHistory(list);
+  renderHistory();
+  showHistoryEntry(snap);
+  setHistoryStatus('<div class="ok">✓ ' + (idx >= 0 ? 'Ενημερώθηκε' : 'Αποθηκεύτηκε') + ' στο ιστορικό: ' + escHtml(entryLabel(snap)) + '.' +
+    (historyMemory ? ' <b>Προσοχή:</b> ο browser δεν επιτρέπει μόνιμη αποθήκευση — κατέβασε το «Ιστορικό (JSON)».' : '') + '</div>');
+  setStatus('Αποθηκεύτηκε στο ιστορικό στατιστικών.');
+  const c = $('historyCard'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+$('exportXlsxBtn').addEventListener('click', async () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const btn = $('exportXlsxBtn');
+  btn.disabled = true;
+  try {
+    const snap = buildStatsSnapshot();
+    setStatus(await saveWorkbook(workbookForEntries([snap]), 'Στατιστικά_' + dateStampForFilename() + '.xlsx'));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally { btn.disabled = false; }
+});
+
+$('histExcelAllBtn').addEventListener('click', async () => {
+  try {
+    const list = getHistory().slice().sort((a, b) => String(a.savedAt).localeCompare(String(b.savedAt)));
+    const msg = await saveWorkbook(workbookForEntries(list), 'Ιστορικό_Στατιστικών_' + todayStamp() + '.xlsx');
+    setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
+  } catch (err) { setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>'); }
+});
+
+$('histJsonAllBtn').addEventListener('click', async () => {
+  try {
+    const payload = { type: HISTORY_FILE_TYPE, generatedAt: new Date().toISOString(), entries: getHistory() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const msg = await saveGeneratedFile(blob, 'Ιστορικό_Στατιστικών_' + todayStamp() + '.json', {
+      description: 'Ιστορικό στατιστικών εφημεριών (JSON)', accept: { 'application/json': ['.json'] },
+    });
+    setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
+  } catch (err) { setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>'); }
+});
+
+$('histImportInput').addEventListener('change', ev => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const list = getHistory();
+      let added = 0;
+      const add = e => {
+        const lab = (e.dateLabel || '').trim();
+        const i = list.findIndex(x => x.id === e.id || (lab && (x.dateLabel || '').trim() === lab && x.savedAt === e.savedAt));
+        if (i >= 0) list[i] = e; else { list.push(e); added++; }
+      };
+      if (data && data.type === HISTORY_FILE_TYPE && Array.isArray(data.entries)) {
+        data.entries.filter(e => e && Array.isArray(e.rows)).forEach(e => add({
+          id: e.id || ('h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+          savedAt: e.savedAt || new Date().toISOString(), dateLabel: e.dateLabel || '', rows: e.rows,
+        }));
+      } else if (data && data.counts && typeof data.counts === 'object') {
+        add({
+          id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+          savedAt: data.generatedAt || new Date().toISOString(), dateLabel: data.dateLabel || '',
+          rows: Object.keys(data.counts).map(n => ({ name: n, specialty: '', week: null, days: null, cumulative: Number(data.counts[n]) || 0 }))
+            .sort((a, b) => b.cumulative - a.cumulative || a.name.localeCompare(b.name, 'el')),
+        });
+      } else {
+        throw new Error('Το αρχείο δεν έχει την αναμενόμενη μορφή (ιστορικό ή στατιστικά εφημεριών).');
+      }
+      setHistory(list);
+      renderHistory();
+      setHistoryStatus('<div class="ok">✓ Εισήχθησαν ' + added + ' εγγραφές.</div>');
+    } catch (err) {
+      setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+renderHistory();
+
+renderResults();
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
