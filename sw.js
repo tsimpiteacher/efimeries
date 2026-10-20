@@ -1,5 +1,5 @@
 /* Service worker: offline χρήση μετά την πρώτη φόρτωση. */
-const CACHE = 'efimeries-v6';
+const CACHE = 'efimeries-v7';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
@@ -8,7 +8,7 @@ const LIBS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then(async (c) => {
-    await c.addAll(CORE);
+    await Promise.all(CORE.map((u) => c.add(new Request(u, { cache: 'reload' }))));
     await Promise.all(LIBS.map((u) => fetch(u, { mode: 'no-cors' }).then((r) => c.put(u, r)).catch(() => {})));
   }).then(() => self.skipWaiting()));
 });
@@ -28,7 +28,7 @@ self.addEventListener('fetch', (e) => {
   if (!sameOrigin && !isLib) return;
   // Network first (ώστε οι ενημερώσεις να φτάνουν), με εφεδρικό το cache όταν δεν υπάρχει σύνδεση.
   e.respondWith(
-    fetch(req).then((res) => {
+    fetch(req, sameOrigin ? { cache: 'no-cache' } : undefined).then((res) => {
       if (res && (res.ok || res.type === 'opaque')) {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy));
