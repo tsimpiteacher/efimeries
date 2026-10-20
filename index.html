@@ -108,11 +108,11 @@
   /* ---------- form controls ---------- */
   label.field{display:flex; flex-direction:column; gap:5px; font-size:13px;}
   label.field .lbl{font-weight:600; color:var(--ink);}
-  input[type="text"], input[type="number"], textarea, select{
+  input[type="text"], input[type="number"], input[type="password"], textarea, select{
     font:inherit; font-size:14px; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
     background:var(--surface); color:var(--ink); width:100%;
   }
-  input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus,
+  input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, textarea:focus, select:focus,
   button:focus-visible, .dropzone:focus-visible{
     outline:2px solid var(--accent); outline-offset:1px;
   }
@@ -243,7 +243,7 @@
 
   <div class="card">
     <h2><span class="step-no">1</span>Πρόγραμμα εβδομάδας</h2>
-    <p class="sub">Το αρχείο .xlsx πρέπει να έχει τη γνωστή μορφή: στήλες «Εκπαιδευτικός» / «Ειδικότητα», έπειτα 5 ημέρες με 7 ώρες η καθεμία. Δεν αποθηκεύεται πουθενά — η επεξεργασία γίνεται μόνο στον browser σου.</p>
+    <p class="sub">Το αρχείο .xlsx πρέπει να έχει τη γνωστή μορφή: στήλες «Εκπαιδευτικός» / «Ειδικότητα», έπειτα 5 ημέρες με 7 ώρες η καθεμία. Το ίδιο το αρχείο δεν ανεβαίνει πουθενά· η επεξεργασία γίνεται στον browser σου (η τρέχουσα επεξεργασία κρατιέται σε αυτή τη συσκευή και, αν συνδέσεις συγχρονισμό, στο δικό σου ιδιωτικό repo).</p>
     <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Ανέβασμα αρχείου Excel">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
       <div class="dz-text">
@@ -271,13 +271,40 @@
       <button class="btn btn-ghost" id="resetBtn" type="button">Επαναφορά όλων στις προεπιλογές…</button>
     </div>
     <div id="resetConfirm" hidden style="margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2);">
-      <div style="font-size:13.5px; font-weight:600; margin-bottom:6px;">Σίγουρα; Θα διαγραφούν όλοι οι αποθηκευμένοι περιορισμοί και θα καθαρίσει το τρέχον πρόγραμμα.</div>
+      <div style="font-size:13.5px; font-weight:600; margin-bottom:6px;">Σίγουρα; Θα διαγραφούν όλοι οι αποθηκευμένοι περιορισμοί και θα καθαρίσει το τρέχον πρόγραμμα (και στις συσκευές που συγχρονίζονται).</div>
       <label style="display:flex; gap:8px; align-items:center; font-size:13px; margin-bottom:10px; cursor:pointer;">
         <input type="checkbox" id="resetHistoryChk"> Διαγραφή και του ιστορικού στατιστικών
       </label>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn btn-primary" id="resetYesBtn" type="button">Ναι, επαναφορά όλων</button>
         <button class="btn btn-ghost" id="resetNoBtn" type="button">Άκυρο</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="syncCard">
+    <h2>Συγχρονισμός συσκευών</h2>
+    <p class="sub">Για να βλέπεις την ίδια εικόνα — ρυθμίσεις, ιστορικό στατιστικών και τρέχουσα επεξεργασία — σε κινητό και υπολογιστή, σύνδεσε την εφαρμογή με ένα <b>ιδιωτικό</b> repo στο GitHub. Τα δεδομένα μένουν στον δικό σου λογαριασμό· το κλειδί αποθηκεύεται μόνο στη συσκευή.</p>
+    <div class="parse-status" id="syncStatus"></div>
+    <div id="syncSetup">
+      <details style="margin:8px 0 12px; font-size:13px;">
+        <summary style="cursor:pointer; font-weight:600;">Οδηγίες σύνδεσης (μία φορά)</summary>
+        <ol style="margin:8px 0 0; padding-left:20px; line-height:1.6;">
+          <li>Στο GitHub φτιάξε ένα νέο repo, π.χ. <code>efimeries-data</code>, και επίλεξε <b>Private</b>.</li>
+          <li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token. Στο «Repository access» επίλεξε <b>Only select repositories</b> και το repo αυτό. Στα «Permissions → Repository permissions» βάλε <b>Contents: Read and write</b>.</li>
+          <li>Αντίγραψε το token εδώ, γράψε το repo ως <code>όνομα-χρήστη/efimeries-data</code> και πάτα «Σύνδεση». Στις άλλες συσκευές κάνεις το ίδιο με το ίδιο token.</li>
+        </ol>
+      </details>
+      <div class="grid2">
+        <label class="field"><span class="lbl">Repo (όνομα-χρήστη/όνομα-repo)</span><input type="text" id="syncRepo" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+        <label class="field"><span class="lbl">Κλειδί πρόσβασης (token)</span><input type="password" id="syncToken" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+      </div>
+      <button class="btn btn-primary" id="syncConnectBtn" type="button">Σύνδεση</button>
+    </div>
+    <div id="syncConnected" hidden>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+        <button class="btn btn-ghost" id="syncNowBtn" type="button">Συγχρονισμός τώρα</button>
+        <button class="btn btn-ghost" id="syncDisconnectBtn" type="button">Αποσύνδεση αυτής της συσκευής</button>
       </div>
     </div>
   </div>
@@ -2029,6 +2056,7 @@ $('historyList').addEventListener('click', async ev => {
       applyPriorCounts(m, { dateLabel: entryLabel(e), generatedAt: e.savedAt, teacherCount: m.size });
       setHistoryStatus('<div class="ok">✓ Το «' + escHtml(entryLabel(e)) + '» ορίστηκε ως βάση για τη δίκαιη κατανομή' + (state.model ? ' και έγινε νέα τοποθέτηση.' : ' (θα εφαρμοστεί όταν ανεβάσεις πρόγραμμα).') + '</div>');
     } else if (act === 'del') {
+      addTomb(e.id);
       setHistory(list.filter(x => x.id !== e.id));
       $('historyView').innerHTML = '';
       renderHistory();
@@ -2127,17 +2155,34 @@ $('histImportInput').addEventListener('change', ev => {
 });
 
 
-/* ---------- μόνιμες ρυθμίσεις (αυτόματη αποθήκευση + επαναφορά) ---------- */
+/* ---------- μόνιμες ρυθμίσεις + συγχρονισμός συσκευών ---------- */
 
 const SETTINGS_KEY = 'efimeries-settings-v1';
+const SETTINGS_AT_KEY = 'efimeries-settings-at-v1';
+const SESSION_LOCAL_KEY = 'efimeries-session-local-v1';
+const TOMB_KEY = 'efimeries-hist-tomb-v1';
+const SYNC_KEY = 'efimeries-sync-v1';
+const SYNC_FILE_TYPE = 'efimeries-sync-v1';
+const SYNC_PATH = 'efimeries-data.json';
 const DEFAULT_POSITIONS = JSON.parse(JSON.stringify(state.positions));
 const INITIAL_RESULTS_HTML = $('results').innerHTML;
 const INITIAL_DZ_MAIN = $('dzMain').textContent;
 const INITIAL_DZ_SUB = $('dzSub').textContent;
 let customDayTimes = {};      // dayName -> {a,b} μόνο όταν διαφέρουν από τις προεπιλεγμένες
 let settingsLastJson = '';
+let settingsAt = 0;           // πότε άλλαξαν τελευταία οι ρυθμίσεις (για συγχρονισμό)
 let settingsMemory = false;   // true όταν ο browser δεν επιτρέπει αποθήκευση
 let settingsFrozen = false;
+let sessionAt = 0;            // πότε άλλαξε τελευταία η τρέχουσα επεξεργασία
+let sessionLastJson = '';
+let histLastRaw = '';
+let syncCfg = null;           // { token, repo, path, sha, lastSync, lastError }
+let syncBusy = false, syncQueued = false, syncTimer = null, syncDirty = false;
+
+function readJson(key) { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+function writeJson(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } }
+
+/* ---------- ρυθμίσεις ---------- */
 
 function settingsSnapshot() {
   Object.keys(state.dayTimes || {}).forEach(d => {
@@ -2191,18 +2236,24 @@ function applySettings(d) {
       if (t && typeof t.a === 'string' && typeof t.b === 'string') customDayTimes[day] = { a: t.a, b: t.b };
     });
   }
-  if (d.priorCounts && typeof d.priorCounts === 'object') {
-    state.priorCounts = new Map(Object.entries(d.priorCounts).map(([k, v]) => [k, Number(v) || 0]));
-    state.priorMeta = d.priorMeta || null;
+  if ('priorCounts' in d) {
+    if (d.priorCounts && typeof d.priorCounts === 'object') {
+      state.priorCounts = new Map(Object.entries(d.priorCounts).map(([k, v]) => [k, Number(v) || 0]));
+      state.priorMeta = d.priorMeta || null;
+    } else { state.priorCounts = null; state.priorMeta = null; }
   }
 }
 
-function loadSettings() {
-  let raw = null;
-  try { raw = localStorage.getItem(SETTINGS_KEY); } catch (e) { raw = null; }
-  if (!raw) return false;
-  try { const d = JSON.parse(raw); if (d && typeof d === 'object') { applySettings(d); return true; } } catch (e) { /* αγνόησε φθαρμένα δεδομένα */ }
-  return false;
+/* Συγχρονίζει τα πεδία της οθόνης με το state (μετά από φόρτωση/λήψη ρυθμίσεων). */
+function refreshSettingsUI() {
+  if (state.model) { revealMainUI(); return; }
+  $('schoolInput').value = state.school;
+  $('exclusionInput').value = state.exclusions.join('\n');
+  $('footnote').value = state.footnote;
+  setSwitch('eaeSwitch', state.includeEAE);
+  setSwitch('dblSwitch', state.avoidDoubleShift);
+  renderPosTable();
+  renderPriorStatsStatus();
 }
 
 function persistSettings(force) {
@@ -2211,8 +2262,10 @@ function persistSettings(force) {
   try { json = JSON.stringify(settingsSnapshot()); } catch (e) { return; }
   if (json === settingsLastJson && !force) return;
   settingsLastJson = json;
-  try { localStorage.setItem(SETTINGS_KEY, json); settingsMemory = false; } catch (e) { settingsMemory = true; }
+  settingsAt = Date.now();
+  try { localStorage.setItem(SETTINGS_KEY, json); localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); settingsMemory = false; } catch (e) { settingsMemory = true; }
   renderPersistInfo();
+  markDirty();
 }
 
 function renderPersistInfo() {
@@ -2231,30 +2284,47 @@ function renderPersistInfo() {
     (settingsMemory ? '<div class="warnbox" style="margin-top:6px;">⚠ Ο browser δεν επιτρέπει μόνιμη αποθήκευση — οι ρυθμίσεις θα χαθούν όταν κλείσεις τη σελίδα. Χρησιμοποίησε «Αποθήκευση επεξεργασίας».</div>' : '');
 }
 
-function resetEverything(alsoHistory) {
-  settingsFrozen = true;
-  try { localStorage.removeItem(SETTINGS_KEY); } catch (e) { /* αγνόησε */ }
-  if (alsoHistory) {
-    try { localStorage.removeItem(HISTORY_KEY); } catch (e) { /* αγνόησε */ }
-    historyMemory = null;
-  }
+/* ---------- τρέχουσα επεξεργασία (τοπική αποθήκευση) ---------- */
+
+function sessionSnapshot() {
+  if (!state.model) return null;
+  const p = buildSessionPayload();
+  delete p.generatedAt;
+  return p;
+}
+
+function saveLocalSession(snap) { writeJson(SESSION_LOCAL_KEY, { at: sessionAt, payload: snap }); }
+
+/* ---------- ιστορικό: ταφόπλακες διαγραφών + συγχώνευση ---------- */
+
+function readTomb() { const t = readJson(TOMB_KEY); return Array.isArray(t) ? t.filter(x => typeof x === 'string') : []; }
+function addTomb(id) { if (!id) return; const t = readTomb(); if (t.indexOf(id) === -1) { t.push(id); writeJson(TOMB_KEY, t.slice(-500)); } }
+
+function mergeHistory(local, remote, tomb) {
+  const map = new Map();
+  (local || []).concat(remote || []).forEach(e => {
+    if (!e || !Array.isArray(e.rows) || !e.id || tomb.indexOf(e.id) !== -1) return;
+    const p = map.get(e.id);
+    if (!p || String(e.savedAt) > String(p.savedAt)) map.set(e.id, e);
+  });
+  const sorted = Array.from(map.values()).sort((a, b) => String(a.savedAt).localeCompare(String(b.savedAt)) || String(a.id).localeCompare(String(b.id)));
+  const out = [];
+  const byLabel = new Map();
+  sorted.forEach(e => {
+    const lab = (e.dateLabel || '').trim();
+    if (lab) { const old = byLabel.get(lab); if (old) out.splice(out.indexOf(old), 1); byLabel.set(lab, e); }
+    out.push(e);
+  });
+  return out;
+}
+
+/* ---------- καθαρισμός τρέχουσας εργασίας / πλήρης επαναφορά ---------- */
+
+function clearWorkingState() {
   state.model = null;
-  state.school = '';
   state.dateLabel = '';
-  state.includeEAE = false;
-  state.avoidDoubleShift = true;
-  state.exclusions = DEFAULT_EXCLUSIONS.slice();
-  state.maxDays = {};
-  state.combat = [];
-  state.lightLoad = [];
-  state.dayExclusions = {};
-  state.positions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
-  state.dayTimes = {};
   state.assignments = {};
-  state.footnote = DEFAULT_FOOTNOTE;
-  state.priorCounts = null;
-  state.priorMeta = null;
-  customDayTimes = {};
+  state.dayTimes = {};
   ['settingsCard', 'footnoteCard', 'statsCard', 'actionbar'].forEach(id => { $(id).hidden = true; });
   $('results').innerHTML = INITIAL_RESULTS_HTML;
   $('dzMain').textContent = INITIAL_DZ_MAIN;
@@ -2263,8 +2333,32 @@ function resetEverything(alsoHistory) {
   $('sessionStatus').innerHTML = '';
   $('historyView').innerHTML = '';
   ['fileInput', 'sessionInput'].forEach(id => { const i = $(id); if (i) i.value = ''; });
-  $('schoolInput').value = '';
   $('dateInput').value = '';
+}
+
+function resetEverything(alsoHistory) {
+  settingsFrozen = true;
+  try { localStorage.removeItem(SETTINGS_KEY); } catch (e) { /* αγνόησε */ }
+  if (alsoHistory) {
+    getHistory().forEach(e => addTomb(e.id));
+    try { localStorage.removeItem(HISTORY_KEY); } catch (e) { /* αγνόησε */ }
+    historyMemory = null;
+  }
+  clearWorkingState();
+  state.school = '';
+  state.includeEAE = false;
+  state.avoidDoubleShift = true;
+  state.exclusions = DEFAULT_EXCLUSIONS.slice();
+  state.maxDays = {};
+  state.combat = [];
+  state.lightLoad = [];
+  state.dayExclusions = {};
+  state.positions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
+  state.footnote = DEFAULT_FOOTNOTE;
+  state.priorCounts = null;
+  state.priorMeta = null;
+  customDayTimes = {};
+  $('schoolInput').value = '';
   $('exclusionInput').value = state.exclusions.join('\n');
   $('footnote').value = state.footnote;
   setSwitch('eaeSwitch', state.includeEAE);
@@ -2274,8 +2368,15 @@ function resetEverything(alsoHistory) {
   renderHistory();
   setHistoryStatus('');
   settingsLastJson = JSON.stringify(settingsSnapshot());
+  settingsAt = Date.now();
+  try { localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); } catch (e) { /* αγνόησε */ }
+  sessionAt = Date.now();
+  sessionLastJson = '';
+  saveLocalSession(null);
+  histLastRaw = JSON.stringify(getHistory());
   settingsFrozen = false;
   renderPersistInfo();
+  markDirty();
 }
 
 $('resetBtn').addEventListener('click', () => { $('resetIdle').hidden = true; $('resetConfirm').hidden = false; });
@@ -2284,23 +2385,251 @@ $('resetYesBtn').addEventListener('click', () => {
   const withHistory = $('resetHistoryChk').checked;
   resetEverything(withHistory);
   $('resetConfirm').hidden = true; $('resetIdle').hidden = false; $('resetHistoryChk').checked = false;
-  $('persistInfo').insertAdjacentHTML('beforeend', '<div class="ok" style="margin-top:6px;">✓ Έγινε επαναφορά όλων' + (withHistory ? ' (και του ιστορικού)' : '') + '.</div>');
+  $('persistInfo').insertAdjacentHTML('beforeend', '<div class="ok" style="margin-top:6px;">✓ Έγινε επαναφορά όλων' + (withHistory ? ' (και του ιστορικού)' : '') + (syncCfg ? ' — θα εφαρμοστεί και στις άλλες συσκευές' : '') + '.</div>');
 });
 
-if (loadSettings()) {
-  $('schoolInput').value = state.school;
-  $('exclusionInput').value = state.exclusions.join('\n');
-  $('footnote').value = state.footnote;
-  setSwitch('eaeSwitch', state.includeEAE);
-  setSwitch('dblSwitch', state.avoidDoubleShift);
-  renderPosTable();
-  renderPriorStatsStatus();
+/* ---------- συγχρονισμός συσκευών μέσω ιδιωτικού GitHub repo ---------- */
+
+function utf8ToB64(s) {
+  const b = new TextEncoder().encode(s);
+  let bin = '';
+  for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(bin);
 }
+function b64ToUtf8(s) {
+  const bin = atob(String(s).replace(/\s/g, ''));
+  const a = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(a);
+}
+
+function setSyncStatus(html) { const el = $('syncStatus'); if (el) el.innerHTML = html || ''; }
+
+function renderSyncUI() {
+  const on = !!syncCfg;
+  $('syncSetup').hidden = on;
+  $('syncConnected').hidden = !on;
+  if (!on) { setSyncStatus('<div style="color:var(--ink-muted); font-size:13px;">Δεν έχει γίνει σύνδεση — οι ρυθμίσεις και το ιστορικό μένουν μόνο σε αυτή τη συσκευή.</div>'); return; }
+  const when = syncCfg.lastSync ? new Date(syncCfg.lastSync).toLocaleString('el-GR') : '—';
+  setSyncStatus(syncCfg.lastError
+    ? '<div class="err">✗ ' + escHtml(syncCfg.lastError) + '</div><div style="font-size:12.5px; color:var(--ink-muted); margin-top:4px;">Σύνδεση με ' + escHtml(syncCfg.repo) + ' · τελευταίος επιτυχής συγχρονισμός: ' + escHtml(when) + '</div>'
+    : '<div class="ok">✓ Συνδεδεμένο με ' + escHtml(syncCfg.repo) + ' · τελευταίος συγχρονισμός: ' + escHtml(when) + '</div>');
+}
+
+function ghReq(method, path, body, accept) {
+  const headers = { 'Accept': accept || 'application/vnd.github+json', 'Authorization': 'Bearer ' + syncCfg.token, 'X-GitHub-Api-Version': '2022-11-28' };
+  const init = { method, headers, cache: 'no-store' };
+  if (body) { headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+  return fetch('https://api.github.com' + path, init);
+}
+function httpError(r) { const e = new Error('http ' + r.status); e.status = r.status; return e; }
+function filePath() { return '/repos/' + syncCfg.repo + '/contents/' + encodeURIComponent(syncCfg.path || SYNC_PATH); }
+
+async function ghGetFile() {
+  const r = await ghReq('GET', filePath() + '?t=' + Date.now());
+  if (r.status === 404) return null;
+  if (!r.ok) throw httpError(r);
+  const j = await r.json();
+  let text;
+  if (j.content && j.encoding === 'base64') text = b64ToUtf8(j.content);
+  else {
+    const rr = await ghReq('GET', filePath() + '?t=' + Date.now(), null, 'application/vnd.github.raw+json');
+    if (!rr.ok) throw httpError(rr);
+    text = await rr.text();
+  }
+  return { sha: j.sha, data: JSON.parse(text) };
+}
+
+async function ghPutFile(data, sha) {
+  const body = { message: 'sync ' + new Date().toISOString(), content: utf8ToB64(JSON.stringify(data)) };
+  if (sha) body.sha = sha;
+  const r = await ghReq('PUT', filePath(), body);
+  if (r.status === 409 || r.status === 422) { const e = httpError(r); e.conflict = true; throw e; }
+  if (!r.ok) throw httpError(r);
+  const j = await r.json();
+  return j && j.content ? j.content.sha : '';
+}
+
+function canonBlob(b) {
+  return JSON.stringify([b.settings, b.settingsAt || 0, b.session, b.sessionAt || 0, b.history, b.tomb]);
+}
+
+/* Συγχωνεύει το τοπικό με το απομακρυσμένο: ό,τι άλλαξε πιο πρόσφατα κερδίζει (ρυθμίσεις και
+   τρέχουσα επεξεργασία), ενώ το ιστορικό ενώνεται (με σεβασμό στις διαγραφές). */
+function mergeWithRemote(rd) {
+  const localSettings = settingsSnapshot();
+  const localSession = sessionSnapshot();
+  let settings = localSettings, sAt = settingsAt, session = localSession, seAt = sessionAt;
+  const tomb = Array.from(new Set(readTomb().concat((rd && Array.isArray(rd.tomb)) ? rd.tomb.filter(x => typeof x === 'string') : []))).sort();
+  writeJson(TOMB_KEY, tomb.slice(-500));
+  const hist = mergeHistory(getHistory(), rd && rd.history, tomb);
+  let applySession = false, applySet = false;
+  if (rd) {
+    if ((rd.sessionAt || 0) > sessionAt) { session = rd.session || null; seAt = rd.sessionAt; applySession = true; }
+    else if ((rd.sessionAt || 0) === sessionAt) session = rd.session || null;
+    if ((rd.settingsAt || 0) > settingsAt && rd.settings) { settings = rd.settings; sAt = rd.settingsAt; applySet = true; }
+    else if ((rd.settingsAt || 0) === settingsAt && rd.settings) settings = rd.settings;
+  }
+  if (applySession) {
+    if (session) applySessionPayload(session); else clearWorkingState();
+  }
+  if (applySession || applySet) {
+    applySettings(settings);
+    refreshSettingsUI();
+  }
+  if (JSON.stringify(hist) !== JSON.stringify(getHistory())) { setHistory(hist); renderHistory(); }
+  // σημάδια «τελευταίας γνωστής κατάστασης» ώστε η λήψη να μην μετράει ως τοπική αλλαγή
+  settingsAt = sAt;
+  try { localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); } catch (e) { /* αγνόησε */ }
+  settingsLastJson = JSON.stringify(settingsSnapshot());
+  persistSettingsRaw();
+  sessionAt = seAt;
+  const snap = sessionSnapshot();
+  sessionLastJson = snap ? JSON.stringify(snap) : '';
+  saveLocalSession(snap);
+  histLastRaw = JSON.stringify(getHistory());
+  return { type: SYNC_FILE_TYPE, v: 1, settings, settingsAt: sAt, session, sessionAt: seAt, history: hist, tomb };
+}
+
+function persistSettingsRaw() { try { localStorage.setItem(SETTINGS_KEY, settingsLastJson); } catch (e) { /* αγνόησε */ } }
+
+function syncErrorText(e) {
+  if (e && e.status === 401) return 'Το κλειδί (token) δεν ισχύει ή έληξε. Πάτα «Αποσύνδεση» και σύνδεσε ξανά με νέο κλειδί.';
+  if (e && (e.status === 403 || e.status === 404)) return 'Δεν βρέθηκε το repo ή το κλειδί δεν έχει δικαίωμα «Contents: Read and write» σε αυτό.';
+  if (e && e.status) return 'Σφάλμα GitHub (' + e.status + '). Δοκίμασε ξανά σε λίγο.';
+  return 'Δεν υπάρχει σύνδεση με το GitHub αυτή τη στιγμή — θα ξαναδοκιμάσει αυτόματα.';
+}
+
+async function syncNow() {
+  if (!syncCfg) return;
+  if (syncBusy) { syncQueued = true; return; }
+  syncBusy = true;
+  clearTimeout(syncTimer);
+  setSyncStatus('<div style="color:var(--ink-muted); font-size:13px;">Συγχρονισμός…</div>');
+  try {
+    persistSettings(false);
+    watchChanges(true);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const remote = await ghGetFile();
+      const rd = remote && remote.data && remote.data.type === SYNC_FILE_TYPE ? remote.data : null;
+      const merged = mergeWithRemote(rd);
+      if (rd && canonBlob(rd) === canonBlob(merged)) { syncCfg.sha = remote.sha; break; }
+      merged.updatedAt = new Date().toISOString();
+      try {
+        syncCfg.sha = await ghPutFile(merged, remote ? remote.sha : undefined);
+        break;
+      } catch (e) {
+        if (e.conflict && attempt < 2) continue;
+        throw e;
+      }
+    }
+    syncDirty = false;
+    syncCfg.lastSync = Date.now();
+    syncCfg.lastError = '';
+    writeJson(SYNC_KEY, syncCfg);
+  } catch (e) {
+    syncCfg.lastError = syncErrorText(e);
+    writeJson(SYNC_KEY, syncCfg);
+  } finally {
+    syncBusy = false;
+    renderSyncUI();
+    if (syncQueued) { syncQueued = false; syncTimer = setTimeout(syncNow, 800); }
+  }
+}
+
+function markDirty() {
+  if (!syncCfg) return;
+  syncDirty = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 4000);
+}
+
+function watchChanges(silent) {
+  if (settingsFrozen) return;
+  let changed = false;
+  const snap = sessionSnapshot();
+  const sj = snap ? JSON.stringify(snap) : '';
+  if (sj !== sessionLastJson) { sessionLastJson = sj; sessionAt = Date.now(); saveLocalSession(snap); changed = true; }
+  const hr = JSON.stringify(getHistory());
+  if (hr !== histLastRaw) { histLastRaw = hr; changed = true; }
+  if (changed && !silent) markDirty();
+}
+
+async function connectSync() {
+  const repo = $('syncRepo').value.trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, '');
+  const token = $('syncToken').value.trim();
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { setSyncStatus('<div class="err">✗ Γράψε το repo ως «όνομα-χρήστη/όνομα-repo».</div>'); return; }
+  if (!token) { setSyncStatus('<div class="err">✗ Βάλε το κλειδί (token).</div>'); return; }
+  const prev = syncCfg;
+  syncCfg = { token, repo, path: SYNC_PATH, sha: '', lastSync: 0, lastError: '' };
+  $('syncConnectBtn').disabled = true;
+  setSyncStatus('<div style="color:var(--ink-muted); font-size:13px;">Έλεγχος σύνδεσης…</div>');
+  try {
+    const r = await ghReq('GET', '/repos/' + repo);
+    if (!r.ok) throw httpError(r);
+    const j = await r.json();
+    if (!j.private) {
+      syncCfg = prev;
+      renderSyncUI();
+      setSyncStatus('<div class="err">✗ Το repo «' + escHtml(repo) + '» είναι δημόσιο. Για να μην φαίνονται ονόματα εκπαιδευτικών, χρησιμοποίησε μόνο <b>ιδιωτικό</b> repo.</div>');
+      return;
+    }
+    writeJson(SYNC_KEY, syncCfg);
+    $('syncToken').value = '';
+    renderSyncUI();
+    await syncNow();
+  } catch (e) {
+    syncCfg = prev;
+    renderSyncUI();
+    setSyncStatus('<div class="err">✗ ' + escHtml(syncErrorText(e)) + '</div>');
+  } finally { $('syncConnectBtn').disabled = false; }
+}
+
+$('syncConnectBtn').addEventListener('click', connectSync);
+$('syncNowBtn').addEventListener('click', () => syncNow());
+$('syncDisconnectBtn').addEventListener('click', () => {
+  syncCfg = null;
+  clearTimeout(syncTimer);
+  try { localStorage.removeItem(SYNC_KEY); } catch (e) { /* αγνόησε */ }
+  renderSyncUI();
+});
+
+/* ---------- εκκίνηση: επαναφορά τοπικών δεδομένων ---------- */
+
+try { settingsAt = Number(localStorage.getItem(SETTINGS_AT_KEY)) || 0; } catch (e) { settingsAt = 0; }
+const storedSettings = readJson(SETTINGS_KEY);
+if (storedSettings && typeof storedSettings === 'object') applySettings(storedSettings);
+const storedSession = readJson(SESSION_LOCAL_KEY);
+if (storedSession && typeof storedSession === 'object') {
+  sessionAt = Number(storedSession.at) || 0;
+  if (storedSession.payload) {
+    try { applySessionPayload(storedSession.payload); } catch (e) { /* φθαρμένη αποθήκευση: αγνόησέ την */ }
+    if (storedSettings) applySettings(storedSettings);
+  }
+}
+if (storedSettings || state.model) refreshSettingsUI();
 settingsLastJson = JSON.stringify(settingsSnapshot());
+{
+  const s0 = sessionSnapshot();
+  sessionLastJson = s0 ? JSON.stringify(s0) : '';
+}
+histLastRaw = JSON.stringify(getHistory());
+syncCfg = readJson(SYNC_KEY);
+if (syncCfg && (!syncCfg.token || !syncCfg.repo)) syncCfg = null;
 renderPersistInfo();
+renderSyncUI();
 setInterval(() => persistSettings(false), 700);
-document.addEventListener('visibilitychange', () => persistSettings(false));
-window.addEventListener('pagehide', () => persistSettings(false));
+setInterval(() => watchChanges(false), 3000);
+document.addEventListener('visibilitychange', () => {
+  persistSettings(false);
+  watchChanges(false);
+  if (document.visibilityState === 'visible') {
+    if (syncCfg && Date.now() - (syncCfg.lastSync || 0) > 20000) syncNow();
+  } else if (syncCfg && syncDirty) { clearTimeout(syncTimer); syncNow(); }
+});
+window.addEventListener('pagehide', () => { persistSettings(false); watchChanges(true); });
+window.addEventListener('online', () => { if (syncCfg) syncNow(); });
+if (syncCfg) setTimeout(syncNow, 800);
 
 renderHistory();
 
