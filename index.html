@@ -231,6 +231,9 @@
     background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
     padding:14px 18px; flex-wrap:wrap;
   }
+  .reminders{flex:1 1 100%; display:flex; flex-direction:column; gap:6px; max-height:9.5em; overflow-y:auto;}
+  .reminders .rm{font-size:12.5px; line-height:1.45; padding:7px 10px; border-radius:7px; background:var(--accent2-soft); color:var(--accent2-soft-ink);}
+  .reminders .rm.err{background:var(--warn-soft); color:var(--warn);}
   .actionbar .status{font-size:13px; color:var(--ink-muted); flex:1; min-width:180px;}
   .btn{
     font:inherit; font-weight:700; font-size:14px; border-radius:9px; padding:11px 18px; cursor:pointer;
@@ -443,6 +446,7 @@
   </div>
 
   <div class="actionbar" id="actionbar" hidden>
+    <div class="reminders" id="reminders" hidden></div>
     <div class="status" id="statusText">Έτοιμο για λήψη.</div>
     <button class="btn btn-ghost" id="regenBtn" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
@@ -1504,6 +1508,7 @@ function computeStats() {
 
 function renderStats() {
   if (!state.model) return;
+  renderReminders();
   const { counts, issues } = computeStats();
   const errors = issues.filter(i => i.level === 'error');
   const warns = issues.filter(i => i.level === 'warn');
@@ -1935,6 +1940,8 @@ function buildStatsSnapshot() {
     id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     savedAt: new Date().toISOString(),
     dateLabel: weekLabel(),
+    sig: scheduleSig(),
+    asig: assignSig(),
     rows,
   };
 }
@@ -2059,6 +2066,43 @@ $('historyList').addEventListener('click', async ev => {
   }
 });
 
+function hashStr(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+/* «Υπογραφή» του προγράμματος (ποιοι/πότε έχουν μάθημα) και των τοποθετήσεων — για τις υπενθυμίσεις. */
+function scheduleSig() { return hashStr(JSON.stringify(state.model.teachers.map(t => [t.name, t.days]))); }
+function assignSig() { return hashStr(JSON.stringify(state.model.days.map(d => { const a = state.assignments[d]; return a ? [a.slotsA, a.slotsB] : null; }))); }
+
+/* Υπενθυμίσεις μέσα στην εφαρμογή (μπάρα κάτω): τι πρέπει να προσέξεις πριν κατεβάσεις / μετά από αλλαγές. */
+function renderReminders() {
+  const box = $('reminders');
+  if (!box || !state.model) return;
+  const items = [];
+  const lab = weekLabel();
+  let entry = null;
+  try { entry = getHistory().find(x => String(x.dateLabel || '').trim() === lab) || null; } catch (e) { entry = null; }
+  if (entry && entry.sig && entry.sig !== scheduleSig()) {
+    items.push(['err', 'Στο ιστορικό υπάρχει ήδη εβδομάδα με την ίδια ημερομηνία («' + lab + '») αλλά από άλλο πρόγραμμα. Αν κατεβάσεις το Word, θα την αντικαταστήσει. Αν είναι νέα εβδομάδα, άλλαξε πρώτα την ημερομηνία στο πεδίο «Ημερομηνία».']);
+  } else if (!entry) {
+    items.push(['warn', 'Αυτή η εβδομάδα δεν έχει αποθηκευτεί ακόμα στο ιστορικό — θα μπει αυτόματα όταν κατεβάσεις το Word.']);
+  } else if (entry.asig && entry.asig !== assignSig()) {
+    items.push(['warn', 'Έχεις αλλαγές μετά την τελευταία λήψη του Word — κατέβασε ξανά, για να ενημερωθεί και το ιστορικό.']);
+  }
+  let gaps = 0, dups = 0;
+  state.model.days.forEach(d => {
+    const a = state.assignments[d];
+    if (!a) return;
+    ['slotsA', 'slotsB'].forEach(k => {
+      const key = k === 'slotsA' ? 'countA' : 'countB';
+      state.positions.forEach((p, i) => { gaps += Math.max(0, (p[key] || 0) - ((a[k] && a[k][i]) || []).length); });
+    });
+    const cnt = dayNameCounts(d);
+    Object.keys(cnt).forEach(n => { if (cnt[n] > 1) dups++; });
+  });
+  if (gaps) items.push(['warn', 'Υπάρχουν ' + gaps + (gaps === 1 ? ' κενή θέση' : ' κενές θέσεις') + ' — συμπλήρωσέ τες με το «＋» δίπλα στη θέση.']);
+  if (dups) items.push(['err', dups + (dups === 1 ? ' όνομα εμφανίζεται' : ' ονόματα εμφανίζονται') + ' περισσότερες από μία φορά την ίδια ημέρα (κόκκινα στον πίνακα).']);
+  box.hidden = !items.length;
+  box.innerHTML = items.map(it => '<div class="rm ' + (it[0] === 'err' ? 'err' : '') + '">' + (it[0] === 'err' ? '✗ ' : '⚠ ') + escHtml(it[1]) + '</div>').join('');
+}
+
 function weekLabel() {
   const lab = String(state.dateLabel || (state.model && state.model.dateLabel) || '').trim();
   return lab || ('Εβδομάδα ' + todayStamp());
@@ -2075,6 +2119,7 @@ function autoSaveHistory() {
   if (idx >= 0) { snap.id = list[idx].id; list[idx] = snap; } else { list.push(snap); }
   setHistory(list);
   renderHistory();
+  renderReminders();
   return '✓ Η εβδομάδα αποθηκεύτηκε στο ιστορικό' + (historyMemory ? ' (προσωρινά — ο browser δεν επιτρέπει μόνιμη αποθήκευση· κατέβασε αντίγραφο ασφαλείας)' : '') + '.';
 }
 
