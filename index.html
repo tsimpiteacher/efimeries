@@ -2313,6 +2313,57 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(function () {});
   });
 }
+
+/* Κάρτα «Εγκατάσταση εφαρμογής»: εμφανίζεται μόνο όταν ο browser επιτρέπει εγκατάσταση
+   (Android/Chrome/Edge/Windows) ή στο iPhone/iPad (οδηγίες) — και όχι όταν η εφαρμογή είναι ήδη εγκατεστημένη. */
+(function () {
+  if (!location.protocol.startsWith('http')) return;
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  if (standalone) return;
+  var KEY = 'efimeries-install-dismissed';
+  try { if (localStorage.getItem(KEY) === '1') return; } catch (e) { /* αγνόησε */ }
+  var deferred = null;
+
+  function removeCard() { var c = document.getElementById('installCard'); if (c && c.parentNode) c.parentNode.removeChild(c); }
+  function showCard(bodyHtml, withButton) {
+    removeCard();
+    var first = document.querySelector('.wrap .card');
+    if (!first) return;
+    var c = document.createElement('div');
+    c.className = 'card';
+    c.id = 'installCard';
+    c.innerHTML = '<h2>Εγκατάσταση εφαρμογής</h2><p class="sub">' + bodyHtml + '</p>' +
+      '<div style="display:flex; gap:10px; flex-wrap:wrap;">' +
+      (withButton ? '<button class="btn btn-primary" id="installBtn" type="button">Εγκατάσταση</button>' : '') +
+      '<button class="btn btn-ghost" id="installDismiss" type="button">Όχι τώρα</button></div>';
+    first.parentNode.insertBefore(c, first);
+    document.getElementById('installDismiss').addEventListener('click', function () {
+      try { localStorage.setItem(KEY, '1'); } catch (e) { /* αγνόησε */ }
+      removeCard();
+    });
+    var b = document.getElementById('installBtn');
+    if (b) b.addEventListener('click', function () {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred.userChoice.then(function () { deferred = null; removeCard(); }).catch(function () { removeCard(); });
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferred = e;
+    showCard('Βάλε την εφαρμογή στην αρχική οθόνη / στο μενού εφαρμογών της συσκευής σου. Ανοίγει σαν κανονική εφαρμογή και δουλεύει και χωρίς internet.', true);
+  });
+  window.addEventListener('appinstalled', removeCard);
+
+  var ua = window.navigator.userAgent || '';
+  var isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/i.test(ua) && window.navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    window.addEventListener('load', function () {
+      showCard('Στο iPhone/iPad: πάτα το κουμπί <b>Κοινοποίηση</b> (το τετράγωνο με το βέλος) και μετά <b>«Προσθήκη στην οθόνη Έναρξης»</b>. Ανοίγει σαν κανονική εφαρμογή και δουλεύει και χωρίς internet.', false);
+    });
+  }
+})();
 </script>
 </body>
 </html>
