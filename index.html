@@ -1762,8 +1762,8 @@ function refreshDayMarks(dayName) {
     if (gap) {
       // Σειρά: (1) μπορούν να εφημερεύσουν τώρα, με τις λιγότερες εφημερίες πρώτα·
       // (2) εφημερεύουν ήδη εκείνη τη μέρα· (3) όλοι οι άλλοι (μάθημα εκείνη την ώρα / εξαιρέσεις)
-      const rest = all.filter(n => names.indexOf(n) === -1);
       const isEl = n => !isExcluded(n, state.exclusions) && (state.includeEAE || !isEAE((findTeacher(n) || {}).specialty));
+      const rest = all.filter(n => names.indexOf(n) === -1 && isEl(n)); // οι εξαιρέσεις δεν εμφανίζονται
       const byLoad = (x, y) => (tot[x] || 0) - (tot[y] || 0) || x.localeCompare(y, 'el');
       const g1 = rest.filter(n => pool.indexOf(n) !== -1 && !cnt[n] && isEl(n)).sort(byLoad);
       const g2 = rest.filter(n => cnt[n]).sort(byLoad);
@@ -1773,7 +1773,7 @@ function refreshDayMarks(dayName) {
       sel.innerHTML = '<option value="">＋</option>' +
         grp('Μπορούν να εφημερεύσουν — λιγότερες εφημερίες πρώτα', g1) +
         grp('Εφημερεύουν ήδη αυτή τη μέρα', g2) +
-        grp('Άλλοι (μάθημα εκείνη την ώρα ή εξαίρεση)', g3);
+        grp('Άλλοι (μάθημα εκείνη την ώρα)', g3);
       sel.title = 'Συμπλήρωση κενής θέσης (' + names.length + '/' + need + ')';
     }
   });
