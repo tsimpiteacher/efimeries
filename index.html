@@ -338,6 +338,10 @@
       <div class="switch on" id="dblSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
       <div class="switch-copy"><b>Αποφυγή διπλής εφημερίας ίδιας ημέρας</b><span>Όποιος τοποθετηθεί στην Α΄ βάρδια μιας ημέρας, δεν προτείνεται ξανά αυτόματα για τη Β΄ βάρδια της ίδιας ημέρας.</span></div>
     </div>
+    <div class="switch-row">
+      <div class="switch on" id="avgSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
+      <div class="switch-copy"><b>Κοινός μέσος όρος εφημεριών ανά εβδομάδα</b><span>Η κατανομή προσπαθεί, εβδομάδα με την εβδομάδα, να φέρει όλους (εκτός των εξαιρέσεων) στον ίδιο μέσο όρο: όποιος έχει κάνει λιγότερες από τον μέσο όρο στις προηγούμενες εβδομάδες του ιστορικού, προηγείται. <span id="avgInfo"></span></span></div>
+    </div>
 
     <div style="margin-top:16px;">
       <label class="field"><span class="lbl">Μόνιμα εξαιρούμενοι από εφημερίες (ένα όνομα/επώνυμο ανά γραμμή)</span>
@@ -975,6 +979,7 @@ const DEFAULT_FOOTNOTE =
   '**Οι εφημερεύοντες κατά το σχόλασμα φροντίζουν για τη συγκέντρωση και αρχειοθέτηση των απουσιολογίων και βιβλίων ύλης, τα οποία οι εκπαιδευτικοί της τελευταίας διδακτικής ώρας κάθε τμήματος φέρνουν στο γραφείο.';
 
 const state = {
+  autoAvg: true,         // κοινός μέσος όρος εβδομάδων από το ιστορικό
   model: null,          // parsed workbook model
   school: '',
   dateLabel: '',
@@ -1214,7 +1219,17 @@ function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '
 
 $('eaeSwitch').addEventListener('click', () => toggleSwitch('eaeSwitch', v => state.includeEAE = v));
 $('dblSwitch').addEventListener('click', () => toggleSwitch('dblSwitch', v => state.avoidDoubleShift = v));
-[$('eaeSwitch'), $('dblSwitch')].forEach(el => el.addEventListener('keydown', e => {
+$('avgSwitch').addEventListener('click', () => {
+  toggleSwitch('avgSwitch', v => { state.autoAvg = v; });
+  updateAvgInfo();
+  if (state.model) {
+    state.assignments = {};
+    runAssignmentsForAllDays();
+    renderResults();
+    setStatus(state.autoAvg ? 'Έγινε νέα τοποθέτηση με κοινό μέσο όρο εβδομάδων.' : 'Έγινε νέα τοποθέτηση μόνο με βάση την τρέχουσα εβδομάδα.');
+  }
+});
+[$('eaeSwitch'), $('dblSwitch'), $('avgSwitch')].forEach(el => el.addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
 }));
 function toggleSwitch(id, setter) {
@@ -1308,6 +1323,8 @@ function revealMainUI() {
   $('footnote').value = state.footnote;
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
+  setSwitch('avgSwitch', state.autoAvg);
+  updateAvgInfo();
   renderPosTable();
   renderDayExclusions();
   renderLightLoad();
@@ -1428,8 +1445,50 @@ $('sessionInput').addEventListener('change', e => {
    previous week's exported stats (state.priorCounts), those counts too, so
    fairness can span multiple weeks when the user opts into that. Without an
    import, this is scoped to the current week only, exactly as before. */
+/* Βάση «προηγούμενων εβδομάδων» για τη δίκαιη κατανομή:
+   – αν ο χρήστης έχει ορίσει χειροκίνητη βάση (state.priorCounts), χρησιμοποιείται αυτή·
+   – αλλιώς, με ενεργό «κοινό μέσο όρο», υπολογίζεται από το ιστορικό: για κάθε άτομο
+     έλλειμμα/πλεόνασμα = σύνολο εφημεριών − (εβδομάδες που συμμετείχε × μέσος όρος όλων).
+     Όποιος είναι κάτω από τον μέσο όρο παίρνει προτεραιότητα. Οι εξαιρούμενοι δεν μετράνε,
+     όποιος δεν έχει ιστορικό θεωρείται «στον μέσο όρο». Η τρέχουσα εβδομάδα (αν έχει ήδη
+     αποθηκευτεί με την ίδια ημερομηνία) δεν μετράει διπλά. */
+function historyPrior() {
+  if (state.priorCounts) return state.priorCounts;
+  if (!state.autoAvg || !state.model) return null;
+  let list;
+  try { list = getHistory(); } catch (e) { return null; }
+  const cur = (state.dateLabel || '').trim();
+  list = list.filter(e => !(cur && String(e.dateLabel || '').trim() === cur));
+  if (!list.length) return null;
+  const tot = {}, wk = {};
+  list.forEach(e => (e.rows || []).forEach(r => {
+    if (r && r.name && +r.week > 0) { tot[r.name] = (tot[r.name] || 0) + (+r.week); wk[r.name] = (wk[r.name] || 0) + 1; }
+  }));
+  const light = new Set(state.lightLoad);
+  const elig = state.model.teachers.filter(t => !isExcluded(t.name, state.exclusions) && (state.includeEAE || !isEAE(t.specialty)));
+  let sT = 0, sW = 0;
+  elig.forEach(t => { if (wk[t.name] && !light.has(t.name)) { sT += tot[t.name]; sW += wk[t.name]; } });
+  const M = sW ? sT / sW : 0;
+  const m = new Map();
+  elig.forEach(t => {
+    const W = wk[t.name] || 0;
+    if (!W) return;
+    m.set(t.name, tot[t.name] - W * M * (light.has(t.name) ? LIGHT_LOAD_WEIGHT : 1));
+  });
+  return m;
+}
+function avgInfoText() {
+  if (!state.autoAvg) return '(Κλειστό)';
+  if (state.priorCounts) return '(Τώρα χρησιμοποιείται η βάση που όρισες χειροκίνητα από στατιστικά.)';
+  const cur = (state.dateLabel || '').trim();
+  const n = getHistory().filter(e => !(cur && String(e.dateLabel || '').trim() === cur)).length;
+  return n ? '(Ενεργό — υπολογίζεται από ' + n + (n === 1 ? ' προηγούμενη εβδομάδα' : ' προηγούμενες εβδομάδες') + ' του ιστορικού.)'
+           : '(Δεν υπάρχει ακόμα ιστορικό· πάτα «Αποθήκευση στο ιστορικό» στο τέλος κάθε εβδομάδας.)';
+}
+function updateAvgInfo() { const el = $('avgInfo'); if (el) el.textContent = avgInfoText(); }
+
 function computeWeekCounts(excludeDay) {
-  const counts = new Map(state.priorCounts || []);
+  const counts = new Map(historyPrior() || []);
   Object.keys(state.assignments).forEach(day => {
     if (day === excludeDay) return;
     const a = state.assignments[day];
@@ -1473,7 +1532,7 @@ function runAssignment(dayName, priorCounts, daysUsed) {
    were imported (state.priorCounts), the count starts from there instead
    of zero, so the fairness spans multiple weeks. */
 function runAssignmentsForAllDays() {
-  const counts = new Map(state.priorCounts || []);
+  const counts = new Map(historyPrior() || []);
   const daysUsed = new Map();
   state.model.days.forEach(dayName => {
     runAssignment(dayName, counts, daysUsed);
@@ -2094,6 +2153,7 @@ function todayStamp() {
 
 function renderHistory() {
   const list = getHistory();
+  updateAvgInfo();
   const host = $('historyList');
   $('histExcelAllBtn').hidden = !list.length;
   $('histJsonAllBtn').hidden = !list.length;
@@ -2285,6 +2345,7 @@ function settingsSnapshot() {
     school: state.school,
     includeEAE: state.includeEAE,
     avoidDoubleShift: state.avoidDoubleShift,
+    autoAvg: state.autoAvg,
     exclusions: state.exclusions,
     maxDays: state.maxDays,
     combat: state.combat,
@@ -2303,6 +2364,7 @@ function applySettings(d) {
   if (typeof d.school === 'string') state.school = d.school;
   if (typeof d.includeEAE === 'boolean') state.includeEAE = d.includeEAE;
   if (typeof d.avoidDoubleShift === 'boolean') state.avoidDoubleShift = d.avoidDoubleShift;
+  if (typeof d.autoAvg === 'boolean') state.autoAvg = d.autoAvg;
   if (strArr(d.exclusions)) state.exclusions = strArr(d.exclusions);
   if (strArr(d.combat)) state.combat = strArr(d.combat);
   if (strArr(d.lightLoad)) state.lightLoad = strArr(d.lightLoad);
@@ -2342,6 +2404,8 @@ function refreshSettingsUI() {
   $('footnote').value = state.footnote;
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
+  setSwitch('avgSwitch', state.autoAvg);
+  updateAvgInfo();
   renderPosTable();
   renderPriorStatsStatus();
 }
@@ -2438,6 +2502,7 @@ function resetEverything(alsoHistory) {
   state.school = '';
   state.includeEAE = false;
   state.avoidDoubleShift = true;
+  state.autoAvg = true;
   state.exclusions = DEFAULT_EXCLUSIONS.slice();
   state.maxDays = {};
   state.combat = [];
@@ -2453,6 +2518,7 @@ function resetEverything(alsoHistory) {
   $('footnote').value = state.footnote;
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
+  setSwitch('avgSwitch', state.autoAvg);
   renderPosTable();
   renderPriorStatsStatus();
   renderHistory();
