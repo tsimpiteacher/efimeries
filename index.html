@@ -1731,9 +1731,8 @@ function refreshDayMarks(dayName) {
   if (!a) return;
   const cnt = dayNameCounts(dayName);
   const all = state.model ? state.model.teachers.map(t => t.name) : [];
-  // σύνολο εφημεριών ανά άτομο σε όλη την εβδομάδα (+ μετρήσεις προηγούμενης εβδομάδας αν έχουν εισαχθεί)
+  // σύνολο εφημεριών ανά άτομο μόνο για την τρέχουσα εβδομάδα
   const tot = {};
-  if (state.priorCounts) state.priorCounts.forEach((v, k) => { tot[k] = v; });
   (state.model ? state.model.days : []).forEach(d => {
     const x = state.assignments[d];
     if (x) ['slotsA', 'slotsB'].forEach(k => (x[k] || []).forEach(l => (l || []).forEach(n => { tot[n] = (tot[n] || 0) + 1; })));
