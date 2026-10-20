@@ -1731,6 +1731,13 @@ function refreshDayMarks(dayName) {
   if (!a) return;
   const cnt = dayNameCounts(dayName);
   const all = state.model ? state.model.teachers.map(t => t.name) : [];
+  // σύνολο εφημεριών ανά άτομο σε όλη την εβδομάδα (+ μετρήσεις προηγούμενης εβδομάδας αν έχουν εισαχθεί)
+  const tot = {};
+  if (state.priorCounts) state.priorCounts.forEach((v, k) => { tot[k] = v; });
+  (state.model ? state.model.days : []).forEach(d => {
+    const x = state.assignments[d];
+    if (x) ['slotsA', 'slotsB'].forEach(k => (x[k] || []).forEach(l => (l || []).forEach(n => { tot[n] = (tot[n] || 0) + 1; })));
+  });
   document.querySelectorAll('#results .pos-row').forEach(row => {
     const inp = row.querySelector('input[type="text"]');
     if (!inp || inp.dataset.day !== dayName) return;
@@ -1754,12 +1761,20 @@ function refreshDayMarks(dayName) {
     const gap = names.length < need;
     sel.hidden = !gap;
     if (gap) {
-      const avail = pool.filter(n => names.indexOf(n) === -1);
-      const others = all.filter(n => names.indexOf(n) === -1 && pool.indexOf(n) === -1);
-      const opt = n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + (cnt[n] ? ' — ήδη εφημερεύει' : '') + '</option>';
+      // Σειρά: (1) μπορούν να εφημερεύσουν τώρα, με τις λιγότερες εφημερίες πρώτα·
+      // (2) εφημερεύουν ήδη εκείνη τη μέρα· (3) όλοι οι άλλοι (μάθημα εκείνη την ώρα / εξαιρέσεις)
+      const rest = all.filter(n => names.indexOf(n) === -1);
+      const isEl = n => !isExcluded(n, state.exclusions) && (state.includeEAE || !isEAE((findTeacher(n) || {}).specialty));
+      const byLoad = (x, y) => (tot[x] || 0) - (tot[y] || 0) || x.localeCompare(y, 'el');
+      const g1 = rest.filter(n => pool.indexOf(n) !== -1 && !cnt[n] && isEl(n)).sort(byLoad);
+      const g2 = rest.filter(n => cnt[n]).sort(byLoad);
+      const g3 = rest.filter(n => !cnt[n] && g1.indexOf(n) === -1).sort(byLoad);
+      const opt = n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + ' · ' + (tot[n] || 0) + (cnt[n] ? ' (ήδη σήμερα)' : '') + '</option>';
+      const grp = (label, arr) => arr.length ? '<optgroup label="' + label + '">' + arr.map(opt).join('') + '</optgroup>' : '';
       sel.innerHTML = '<option value="">＋</option>' +
-        (avail.length ? '<optgroup label="Διαθέσιμοι τη βάρδια">' + avail.map(opt).join('') + '</optgroup>' : '') +
-        (others.length ? '<optgroup label="Άλλοι (με μάθημα εκείνη την ώρα)">' + others.map(opt).join('') + '</optgroup>' : '');
+        grp('Μπορούν να εφημερεύσουν — λιγότερες εφημερίες πρώτα', g1) +
+        grp('Εφημερεύουν ήδη αυτή τη μέρα', g2) +
+        grp('Άλλοι (μάθημα εκείνη την ώρα ή εξαίρεση)', g3);
       sel.title = 'Συμπλήρωση κενής θέσης (' + names.length + '/' + need + ')';
     }
   });
