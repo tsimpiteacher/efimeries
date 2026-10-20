@@ -22,7 +22,7 @@
     --ink:#1E2420; --ink-muted:#5C6660; --line:#C7D0C5; --line-soft:#DAE2D8;
     --accent:#2F5D3A; --accent-ink:#FFFFFF; --accent-soft:#D9E6DA; --accent-soft-ink:#1E402A;
     --accent2:#8A501B; --accent2-soft:#EFDCC3; --accent2-soft-ink:#5C3710;
-    --warn:#9A2F1C; --warn-soft:#F4DAD2;
+    --warn:#9A2F1C; --warn-soft:#F4DAD2; --bad:#D4281A;
     --shadow: 0 1px 2px rgba(20,26,18,.06), 0 6px 18px rgba(20,26,18,.07);
     --radius: 12px;
     color-scheme: light;
@@ -33,7 +33,7 @@
       --ink:#EAEFE6; --ink-muted:#A7B3A2; --line:#333C2C; --line-soft:#2A3324;
       --accent:#84C592; --accent-ink:#0E1710; --accent-soft:#233221; --accent-soft-ink:#B9E3C1;
       --accent2:#E0A868; --accent2-soft:#3A2A16; --accent2-soft-ink:#F0CD9E;
-      --warn:#E48A72; --warn-soft:#3B1D16;
+      --warn:#E48A72; --warn-soft:#3B1D16; --bad:#FF6B5B;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
       color-scheme: dark;
     }
@@ -43,7 +43,7 @@
     --ink:#EAEFE6; --ink-muted:#A7B3A2; --line:#333C2C; --line-soft:#2A3324;
     --accent:#84C592; --accent-ink:#0E1710; --accent-soft:#233221; --accent-soft-ink:#B9E3C1;
     --accent2:#E0A868; --accent2-soft:#3A2A16; --accent2-soft-ink:#F0CD9E;
-    --warn:#E48A72; --warn-soft:#3B1D16;
+    --warn:#E48A72; --warn-soft:#3B1D16; --bad:#FF6B5B;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
     color-scheme: dark;
   }
@@ -189,6 +189,18 @@
   .pos-row{display:grid; grid-template-columns:112px 1fr; gap:8px; align-items:center; padding:5px 0;}
   .pos-row .pos-label{font-size:12px; font-weight:600; color:var(--ink-muted); line-height:1.3;}
   .pos-row input[type="text"]{font-size:13.5px; padding:7px 9px;}
+  .pos-field{display:flex; align-items:center; gap:6px; min-width:0;}
+  .pos-in{position:relative; flex:1; min-width:0;}
+  .pos-in input[type="text"]{width:100%;}
+  .pos-view{position:absolute; inset:0; display:none; align-items:center; padding:0 10px; font-size:13.5px; white-space:pre; overflow:hidden; pointer-events:none; color:var(--ink);}
+  .pos-in.has-bad .pos-view{display:flex;}
+  .pos-in.has-bad input[type="text"]{color:transparent;}
+  .pos-in.has-bad input[type="text"]:focus{color:var(--bad);}
+  .pos-in.has-bad:focus-within .pos-view{display:none;}
+  .pos-view .bad{color:var(--bad); font-weight:700;}
+  select.gap-add{flex:none; width:34px; height:34px; padding:0; border:1px dashed var(--line); border-radius:8px; background:var(--surface); color:var(--accent); font-size:18px; line-height:1; text-align:center; text-align-last:center; cursor:pointer; -webkit-appearance:none; appearance:none;}
+  select.gap-add:hover, select.gap-add:focus{border-color:var(--accent); border-style:solid;}
+  select.gap-add[hidden]{display:none;}
   .leftover{margin-top:10px; font-size:11.5px; color:var(--ink-muted); line-height:1.5;}
   .leftover b{color:var(--ink);}
   .short-warn{margin-top:8px; font-size:11.5px; color:var(--warn); background:var(--warn-soft); border-radius:6px; padding:6px 9px;}
@@ -1642,6 +1654,7 @@ function renderBoard(dayName) {
   body.appendChild(renderShiftCol(dayName, 'A', times.a, a));
   body.appendChild(renderShiftCol(dayName, 'B', times.b, a));
   board.appendChild(body);
+  setTimeout(() => refreshDayMarks(dayName), 0);
   return board;
 }
 
@@ -1660,7 +1673,8 @@ function renderShiftCol(dayName, shift, time, a) {
   state.positions.forEach((p, i) => {
     const val = (slots[i] || []).join(' – ');
     html += '<div class="pos-row"><div class="pos-label">' + escapeAttr(p.label) + '</div>' +
-      '<input type="text" list="' + listId + '" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '" value="' + escapeAttr(val) + '"></div>';
+      '<div class="pos-field"><div class="pos-in"><input type="text" list="' + listId + '" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '" value="' + escapeAttr(val) + '"><div class="pos-view" aria-hidden="true"></div></div>' +
+      '<select class="gap-add" hidden title="Συμπλήρωση κενής θέσης" aria-label="Συμπλήρωση κενής θέσης" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '"></select></div></div>';
   });
 
   html += '<datalist id="' + listId + '">' + pool.map(n => '<option value="' + escapeAttr(n) + '">').join('') + '</datalist>';
@@ -1683,10 +1697,72 @@ function renderShiftCol(dayName, shift, time, a) {
     const names = e.target.value.split(/[–,\/]/).map(x => x.trim()).filter(Boolean);
     const key = s === 'A' ? 'slotsA' : 'slotsB';
     state.assignments[d][key][pos] = names;
+    refreshDayMarks(d);
+    renderStats();
+  }));
+  col.querySelectorAll('.pos-row input[type="text"]').forEach(el => el.addEventListener('blur', () => refreshDayMarks(el.dataset.day)));
+  col.querySelectorAll('select.gap-add').forEach(sel => sel.addEventListener('change', e => {
+    const d = sel.dataset.day, s2 = sel.dataset.shift, pos = +sel.dataset.pos;
+    const name = sel.value;
+    sel.value = '';
+    if (!name) return;
+    const key = s2 === 'A' ? 'slotsA' : 'slotsB';
+    const cur = (state.assignments[d][key][pos] || []).slice();
+    if (cur.indexOf(name) === -1) cur.push(name);
+    state.assignments[d][key][pos] = cur;
+    const inp = sel.closest('.pos-row').querySelector('input[type="text"]');
+    inp.value = cur.join(' – ');
+    refreshDayMarks(d);
     renderStats();
   }));
 
   return col;
+}
+
+/* Σημάνσεις ημέρας: κόκκινο όνομα όταν εφημερεύει >1 φορά την ίδια μέρα + dropdown για κενές θέσεις */
+function dayNameCounts(dayName) {
+  const a = state.assignments[dayName], cnt = {};
+  if (!a) return cnt;
+  ['slotsA', 'slotsB'].forEach(k => (a[k] || []).forEach(list => (list || []).forEach(n => { cnt[n] = (cnt[n] || 0) + 1; })));
+  return cnt;
+}
+function refreshDayMarks(dayName) {
+  const a = state.assignments[dayName];
+  if (!a) return;
+  const cnt = dayNameCounts(dayName);
+  const all = state.model ? state.model.teachers.map(t => t.name) : [];
+  document.querySelectorAll('#results .pos-row').forEach(row => {
+    const inp = row.querySelector('input[type="text"]');
+    if (!inp || inp.dataset.day !== dayName) return;
+    const shift = inp.dataset.shift, pos = +inp.dataset.pos;
+    const key = shift === 'A' ? 'slotsA' : 'slotsB';
+    const pool = shift === 'A' ? a.poolA : a.poolB;
+    const names = (a[key][pos] || []);
+    const need = (state.positions[pos] || {})[shift === 'A' ? 'countA' : 'countB'] || 0;
+    // κόκκινο
+    const wrap = row.querySelector('.pos-in'), view = row.querySelector('.pos-view');
+    const hasBad = names.some(n => cnt[n] > 1);
+    wrap.classList.toggle('has-bad', hasBad);
+    if (hasBad) {
+      view.innerHTML = inp.value.split(/([–,\/])/).map(part => {
+        const t = part.trim();
+        return (t && cnt[t] > 1) ? '<span class="bad" title="Εφημερεύει περισσότερες από μία φορές αυτή την ημέρα">' + escapeAttr(part) + '</span>' : escapeAttr(part);
+      }).join('');
+    } else view.textContent = '';
+    // dropdown κενών
+    const sel = row.querySelector('select.gap-add');
+    const gap = names.length < need;
+    sel.hidden = !gap;
+    if (gap) {
+      const avail = pool.filter(n => names.indexOf(n) === -1);
+      const others = all.filter(n => names.indexOf(n) === -1 && pool.indexOf(n) === -1);
+      const opt = n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + (cnt[n] ? ' — ήδη εφημερεύει' : '') + '</option>';
+      sel.innerHTML = '<option value="">＋</option>' +
+        (avail.length ? '<optgroup label="Διαθέσιμοι τη βάρδια">' + avail.map(opt).join('') + '</optgroup>' : '') +
+        (others.length ? '<optgroup label="Άλλοι (με μάθημα εκείνη την ώρα)">' + others.map(opt).join('') + '</optgroup>' : '');
+      sel.title = 'Συμπλήρωση κενής θέσης (' + names.length + '/' + need + ')';
+    }
+  });
 }
 
 /* ---------- file parsing ---------- */
