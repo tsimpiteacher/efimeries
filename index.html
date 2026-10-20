@@ -203,6 +203,9 @@
   select.gap-add[hidden]{display:none;}
   .leftover{margin-top:10px; font-size:11.5px; color:var(--ink-muted); line-height:1.5;}
   .leftover b{color:var(--ink);}
+  .data-sec{border-top:1px solid var(--line); padding:10px 0; margin-top:10px;}
+  .data-sec>summary{cursor:pointer; font-weight:600; font-size:14px;}
+  .data-badge{font-weight:500; font-size:12.5px; color:var(--ink-muted); margin-left:6px;}
   .short-warn{margin-top:8px; font-size:11.5px; color:var(--warn); background:var(--warn-soft); border-radius:6px; padding:6px 9px;}
 
   /* ---------- footnote ---------- */
@@ -265,60 +268,72 @@
     </div>
     <input type="file" id="fileInput" accept=".xlsx,.xls">
     <div class="parse-status" id="parseStatus"></div>
-    <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <label class="btn btn-ghost" style="cursor:pointer;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
-        Φόρτωση αποθηκευμένης επεξεργασίας
-        <input type="file" id="sessionInput" accept=".json,application/json" style="display:none;">
-      </label>
-    </div>
-    <div class="parse-status" id="sessionStatus"></div>
   </div>
 
-  <div class="card" id="persistCard">
-    <h2>Μόνιμες ρυθμίσεις</h2>
-    <p class="sub">Όλοι οι περιορισμοί σου (εξαιρέσεις, μάχιμοι, λιγότερες εφημερίες, όρια ημερών, εξαιρέσεις ανά ημέρα, θέσεις, ώρες βαρδιών, υποσημείωση, βάση στατιστικών) <b>αποθηκεύονται αυτόματα σε αυτή τη συσκευή</b> και μένουν ίδιοι σε κάθε νέο πρόγραμμα που ανεβάζεις, μέχρι να τους αλλάξεις εσύ.</p>
+  <div class="card" id="dataCard">
+    <h2>Δεδομένα &amp; αποθήκευση</h2>
+    <p class="sub"><b>Όλα αποθηκεύονται αυτόματα</b> σε αυτή τη συσκευή: οι ρυθμίσεις και οι περιορισμοί σου, η τρέχουσα επεξεργασία και το ιστορικό εβδομάδων. Όταν κατεβάζεις το Word, η εβδομάδα μπαίνει μόνη της στο ιστορικό (απ’ αυτό υπολογίζεται ο κοινός μέσος όρος). Δεν χρειάζεται να πατήσεις «αποθήκευση» πουθενά. Για να έχεις τα ίδια σε κινητό και υπολογιστή, ενεργοποίησε τον συγχρονισμό.</p>
     <div class="parse-status" id="persistInfo"></div>
-    <div id="resetIdle" style="margin-top:10px;">
-      <button class="btn btn-ghost" id="resetBtn" type="button">Επαναφορά όλων στις προεπιλογές…</button>
-    </div>
-    <div id="resetConfirm" hidden style="margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2);">
-      <div style="font-size:13.5px; font-weight:600; margin-bottom:6px;">Σίγουρα; Θα διαγραφούν όλοι οι αποθηκευμένοι περιορισμοί και θα καθαρίσει το τρέχον πρόγραμμα (και στις συσκευές που συγχρονίζονται).</div>
-      <label style="display:flex; gap:8px; align-items:center; font-size:13px; margin-bottom:10px; cursor:pointer;">
-        <input type="checkbox" id="resetHistoryChk"> Διαγραφή και του ιστορικού στατιστικών
-      </label>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="resetYesBtn" type="button">Ναι, επαναφορά όλων</button>
-        <button class="btn btn-ghost" id="resetNoBtn" type="button">Άκυρο</button>
+    <div class="parse-status" id="historyStatus"></div>
+    <details class="data-sec" id="histSec">
+      <summary>Ιστορικό εβδομάδων <span class="data-badge" id="histCount"></span></summary>
+      <div id="historyList"></div>
+      <div id="historyView" style="margin-top:14px; overflow-x:auto;"></div>
+    </details>
+    <details class="data-sec" id="syncSec">
+      <summary>Συγχρονισμός συσκευών <span class="data-badge" id="syncBadge"></span></summary>
+      <p class="sub">Για να βλέπεις την ίδια εικόνα — ρυθμίσεις, ιστορικό στατιστικών και τρέχουσα επεξεργασία — σε κινητό και υπολογιστή, σύνδεσε την εφαρμογή με ένα <b>ιδιωτικό</b> repo στο GitHub. Τα δεδομένα μένουν στον δικό σου λογαριασμό· το κλειδί αποθηκεύεται μόνο στη συσκευή.</p>
+      <div class="parse-status" id="syncStatus"></div>
+      <div id="syncSetup">
+        <details style="margin:8px 0 12px; font-size:13px;">
+          <summary style="cursor:pointer; font-weight:600;">Οδηγίες σύνδεσης (μία φορά)</summary>
+          <ol style="margin:8px 0 0; padding-left:20px; line-height:1.6;">
+            <li>Στο GitHub φτιάξε ένα νέο repo, π.χ. <code>efimeries-data</code>, και επίλεξε <b>Private</b>.</li>
+            <li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token. Στο «Repository access» επίλεξε <b>Only select repositories</b> και το repo αυτό. Στα «Permissions → Repository permissions» βάλε <b>Contents: Read and write</b>.</li>
+            <li>Αντίγραψε το token εδώ, γράψε το repo ως <code>όνομα-χρήστη/efimeries-data</code> και πάτα «Σύνδεση». Στις άλλες συσκευές κάνεις το ίδιο με το ίδιο token.</li>
+          </ol>
+        </details>
+        <div class="grid2">
+          <label class="field"><span class="lbl">Repo (όνομα-χρήστη/όνομα-repo)</span><input type="text" id="syncRepo" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+          <label class="field"><span class="lbl">Κλειδί πρόσβασης (token)</span><input type="password" id="syncToken" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+        </div>
+        <button class="btn btn-primary" id="syncConnectBtn" type="button">Σύνδεση</button>
       </div>
-    </div>
-  </div>
-
-  <div class="card" id="syncCard">
-    <h2>Συγχρονισμός συσκευών</h2>
-    <p class="sub">Για να βλέπεις την ίδια εικόνα — ρυθμίσεις, ιστορικό στατιστικών και τρέχουσα επεξεργασία — σε κινητό και υπολογιστή, σύνδεσε την εφαρμογή με ένα <b>ιδιωτικό</b> repo στο GitHub. Τα δεδομένα μένουν στον δικό σου λογαριασμό· το κλειδί αποθηκεύεται μόνο στη συσκευή.</p>
-    <div class="parse-status" id="syncStatus"></div>
-    <div id="syncSetup">
-      <details style="margin:8px 0 12px; font-size:13px;">
-        <summary style="cursor:pointer; font-weight:600;">Οδηγίες σύνδεσης (μία φορά)</summary>
-        <ol style="margin:8px 0 0; padding-left:20px; line-height:1.6;">
-          <li>Στο GitHub φτιάξε ένα νέο repo, π.χ. <code>efimeries-data</code>, και επίλεξε <b>Private</b>.</li>
-          <li>GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token. Στο «Repository access» επίλεξε <b>Only select repositories</b> και το repo αυτό. Στα «Permissions → Repository permissions» βάλε <b>Contents: Read and write</b>.</li>
-          <li>Αντίγραψε το token εδώ, γράψε το repo ως <code>όνομα-χρήστη/efimeries-data</code> και πάτα «Σύνδεση». Στις άλλες συσκευές κάνεις το ίδιο με το ίδιο token.</li>
-        </ol>
-      </details>
-      <div class="grid2">
-        <label class="field"><span class="lbl">Repo (όνομα-χρήστη/όνομα-repo)</span><input type="text" id="syncRepo" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
-        <label class="field"><span class="lbl">Κλειδί πρόσβασης (token)</span><input type="password" id="syncToken" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+      <div id="syncConnected" hidden>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+          <button class="btn btn-ghost" id="syncNowBtn" type="button">Συγχρονισμός τώρα</button>
+          <button class="btn btn-ghost" id="syncDisconnectBtn" type="button">Αποσύνδεση αυτής της συσκευής</button>
+        </div>
       </div>
-      <button class="btn btn-primary" id="syncConnectBtn" type="button">Σύνδεση</button>
-    </div>
-    <div id="syncConnected" hidden>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-        <button class="btn btn-ghost" id="syncNowBtn" type="button">Συγχρονισμός τώρα</button>
-        <button class="btn btn-ghost" id="syncDisconnectBtn" type="button">Αποσύνδεση αυτής της συσκευής</button>
+    </details>
+    <details class="data-sec" id="backupSec">
+      <summary>Αντίγραφο ασφαλείας &amp; επαναφορά</summary>
+      <p class="sub" style="margin-top:8px;">Προαιρετικό: κατεβάζεις ένα αρχείο με το ιστορικό και τις ρυθμίσεις σου και το φορτώνεις όπου θες. Με τον συγχρονισμό δεν το χρειάζεσαι.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+        <button class="btn btn-ghost" id="histExcelAllBtn" type="button" hidden>Excel όλου του ιστορικού</button>
+        <button class="btn btn-ghost" id="histJsonAllBtn" type="button" hidden>Λήψη αντιγράφου (JSON)</button>
+        <label class="link-btn" style="cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+          Επαναφορά από αντίγραφο (JSON)
+          <input type="file" id="histImportInput" accept=".json,application/json" style="display:none;">
+        </label>
       </div>
-    </div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+      <div id="resetIdle" style="margin-top:10px;">
+        <button class="btn btn-ghost" id="resetBtn" type="button">Επαναφορά όλων στις προεπιλογές…</button>
+      </div>
+      <div id="resetConfirm" hidden style="margin-top:10px; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2);">
+        <div style="font-size:13.5px; font-weight:600; margin-bottom:6px;">Σίγουρα; Θα διαγραφούν όλοι οι αποθηκευμένοι περιορισμοί και θα καθαρίσει το τρέχον πρόγραμμα (και στις συσκευές που συγχρονίζονται).</div>
+        <label style="display:flex; gap:8px; align-items:center; font-size:13px; margin-bottom:10px; cursor:pointer;">
+          <input type="checkbox" id="resetHistoryChk"> Διαγραφή και του ιστορικού στατιστικών
+        </label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="resetYesBtn" type="button">Ναι, επαναφορά όλων</button>
+          <button class="btn btn-ghost" id="resetNoBtn" type="button">Άκυρο</button>
+        </div>
+      </div>
+      </div>
+    </details>
   </div>
 
   <div class="card" id="settingsCard" hidden>
@@ -374,23 +389,6 @@
     </div>
 
     <div style="margin-top:18px;">
-      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Δίκαιη κατανομή μεταξύ διαφορετικών εβδομάδων (προαιρετικό)</div>
-      <p class="sub" style="margin-top:0;">Χωρίς εισαγωγή, η δίκαιη κατανομή υπολογίζεται μόνο μέσα στην τρέχουσα εβδομάδα. Αν ανεβάσεις το αρχείο στατιστικών που κατέβασες την προηγούμενη φορά, οι νέες τοποθετήσεις θα λαμβάνουν υπόψη και τις παλιότερες εφημερίες.</p>
-      <div id="priorStatsStatus" class="parse-status" style="margin-bottom:8px;"></div>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <label class="link-btn" style="cursor:pointer;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
-          Εισαγωγή στατιστικών προηγούμενης εβδομάδας
-          <input type="file" id="priorStatsInput" accept=".json,application/json" style="display:none;">
-        </label>
-        <button class="link-btn" id="clearPriorStatsBtn" type="button" hidden>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-          Απενεργοποίηση
-        </button>
-      </div>
-    </div>
-
-    <div style="margin-top:18px;">
       <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Θέσεις εφημερίας &amp; αριθμός εκπαιδευτικών ανά βάρδια</div>
       <p class="sub" style="margin-top:0;">Σειρά προτεραιότητας στην αυτόματη τοποθέτηση: 1) ίση κατανομή του συνολικού αριθμού εφημεριών της εβδομάδας σε όλους (πρώτα αποφασίζεται ΠΟΙΟΣ κάνει εφημερία, ανεξαρτήτως αίθουσας) · 2) κανείς δεν μπαίνει και στις δύο βάρδιες την ίδια μέρα · 3) μόνο μετά, η αίθουσα διδασκαλίας αποφασίζει ΠΟΥ, όσο γίνεται: Γ1–Γ4, Β3, Β4 → 3ος όροφος, Α1–Α5, Β1 → ισόγειο ή 2ος όροφος, Ζευκιλής/Καλογήρου/ο,τι διδάσκει στο Β2 → ισόγειο. Αν χρειαστεί, κάποιος μπορεί να μπει σε θέση εκτός αίθουσάς του ώστε να μην χαλάσει η ισορροπία. Γι' αυτό οι τρεις παρακάτω θέσεις είναι σταθερές· μπορείς να αλλάξεις μόνο τον τίτλο ή τον αριθμό ατόμων ανά βάρδια.</p>
       <div style="overflow-x:auto;">
@@ -433,14 +431,6 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5 5 5-5M5 3h14"/></svg>
             Λήψη Excel
           </button>
-          <button class="btn btn-ghost" id="saveHistoryBtn" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
-            Αποθήκευση στο ιστορικό
-          </button>
-          <button class="btn btn-ghost" id="exportStatsBtn" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9M7 14l5 5 5-5M5 3h14"/></svg>
-            Αρχείο JSON
-          </button>
         </div>
       </div>
       <div style="overflow-x:auto;">
@@ -452,32 +442,11 @@
     </div>
   </div>
 
-  <div class="card" id="historyCard">
-    <h2>Ιστορικό στατιστικών</h2>
-    <p class="sub">Πάτα «Αποθήκευση στο ιστορικό» (στα Στατιστικά) για να κρατάς κάθε εβδομάδα. Εδώ τα βλέπεις ξανά, κατεβάζεις Excel, ή τα χρησιμοποιείς ως βάση για δίκαιη κατανομή. Το ιστορικό μένει <b>σε αυτή τη συσκευή / browser</b> — για αντίγραφο ή για άλλη συσκευή κατέβασε το αρχείο «Ιστορικό (JSON)» και εισήγαγέ το εκεί.</p>
-    <div class="parse-status" id="historyStatus"></div>
-    <div id="historyList"></div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
-      <button class="btn btn-ghost" id="histExcelAllBtn" type="button" hidden>Excel όλου του ιστορικού</button>
-      <button class="btn btn-ghost" id="histJsonAllBtn" type="button" hidden>Ιστορικό (JSON)</button>
-      <label class="link-btn" style="cursor:pointer;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
-        Εισαγωγή αρχείου (ιστορικό ή στατιστικά JSON)
-        <input type="file" id="histImportInput" accept=".json,application/json" style="display:none;">
-      </label>
-    </div>
-    <div id="historyView" style="margin-top:14px; overflow-x:auto;"></div>
-  </div>
-
   <div class="actionbar" id="actionbar" hidden>
     <div class="status" id="statusText">Έτοιμο για λήψη.</div>
     <button class="btn btn-ghost" id="regenBtn" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
       Νέα τοποθέτηση (όλες οι ημέρες)
-    </button>
-    <button class="btn btn-ghost" id="saveSessionBtn" type="button">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
-      Αποθήκευση επεξεργασίας
     </button>
     <button class="btn btn-primary" id="downloadBtn" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
@@ -1249,62 +1218,6 @@ $('exclusionInput').addEventListener('input', e => {
 });
 $('footnote').addEventListener('input', e => state.footnote = e.target.value);
 
-/* ---------- cross-week fairness: import/export of a small stats file ---------- */
-
-const PRIOR_STATS_FILE_TYPE = 'efimeries-stats-v1';
-
-function renderPriorStatsStatus() {
-  const el = $('priorStatsStatus');
-  const clearBtn = $('clearPriorStatsBtn');
-  if (state.priorCounts) {
-    const meta = state.priorMeta || {};
-    el.innerHTML = '<div class="ok">✓ Ενεργό — βάση από ' + escapeAttr(meta.dateLabel || 'προηγούμενη εβδομάδα') +
-      ' (' + state.priorCounts.size + ' εκπαιδευτικοί). Οι νέες τοποθετήσεις λαμβάνουν υπόψη και αυτές τις μετρήσεις.</div>';
-    clearBtn.hidden = false;
-  } else {
-    el.innerHTML = '<div style="color:var(--muted, #6b7280); font-size:13px;">Καμία εισαγωγή — η δίκαιη κατανομή υπολογίζεται μόνο μέσα στην τρέχουσα εβδομάδα.</div>';
-    clearBtn.hidden = true;
-  }
-}
-
-function applyPriorCounts(counts, meta) {
-  state.priorCounts = counts;
-  state.priorMeta = meta || null;
-  renderPriorStatsStatus();
-  if (state.model) {
-    state.assignments = {};
-    runAssignmentsForAllDays();
-    renderResults();
-    setStatus('Οι τοποθετήσεις ξαναέγιναν με βάση τις εισαγόμενες μετρήσεις.');
-  }
-}
-
-$('priorStatsInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || typeof data !== 'object' || !data.counts || typeof data.counts !== 'object') {
-        throw new Error('Το αρχείο δεν έχει την αναμενόμενη μορφή στατιστικών εφημεριών.');
-      }
-      const counts = new Map(Object.entries(data.counts).map(([k, v]) => [k, Number(v) || 0]));
-      applyPriorCounts(counts, { dateLabel: data.dateLabel || '', generatedAt: data.generatedAt || '' });
-    } catch (err) {
-      $('priorStatsStatus').innerHTML = '<div class="err">✗ Δεν ήταν δυνατή η ανάγνωση: ' + escapeAttr(err.message || String(err)) + '</div>';
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-$('clearPriorStatsBtn').addEventListener('click', () => {
-  applyPriorCounts(null, null);
-});
-
-renderPriorStatsStatus();
-
 /* ---------- full session save/load (resume a previous edit later) ---------- */
 
 const SESSION_FILE_TYPE = 'efimeries-session-v1';
@@ -1331,7 +1244,6 @@ function revealMainUI() {
   renderCombat();
   renderMaxDays();
   renderResults();
-  renderPriorStatsStatus();
 }
 
 /* Sets a switch's visual/aria state directly (no toggle), for restoring a
@@ -1387,8 +1299,8 @@ function applySessionPayload(data) {
   state.dayTimes = data.dayTimes || {};
   state.assignments = data.assignments || {};
   state.footnote = typeof data.footnote === 'string' ? data.footnote : DEFAULT_FOOTNOTE;
-  state.priorCounts = data.priorCounts ? new Map(Object.entries(data.priorCounts)) : null;
-  state.priorMeta = data.priorMeta || null;
+  state.priorCounts = null;
+  state.priorMeta = null;
 
   $('dzMain').textContent = 'Πρόγραμμα από αποθηκευμένη επεξεργασία';
   $('dzSub').textContent = 'Μπορείς να ανεβάσεις κι άλλο αρχείο .xlsx όποτε θες';
@@ -1401,42 +1313,6 @@ function applySessionPayload(data) {
   setStatus('Επεξεργασία επαναφέρθηκε. Έλεγξε τις τοποθετήσεις πριν τη λήψη.');
 }
 
-$('saveSessionBtn').addEventListener('click', async () => {
-  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
-  const btn = $('saveSessionBtn');
-  btn.disabled = true;
-  try {
-    const payload = buildSessionPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const safeDate = dateStampForFilename();
-    const filename = 'Εφημερίες_' + safeDate + '.json';
-    setStatus(await saveGeneratedFile(blob, filename, {
-      description: 'Αποθηκευμένη επεξεργασία εφημεριών (JSON)',
-      accept: { 'application/json': ['.json'] },
-    }));
-  } catch (err) {
-    setStatus('Σφάλμα: ' + (err.message || String(err)));
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-$('sessionInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      applySessionPayload(JSON.parse(reader.result));
-      $('sessionStatus').innerHTML = '';
-    } catch (err) {
-      $('sessionStatus').innerHTML = '<div class="err">✗ Δεν ήταν δυνατή η ανάγνωση: ' + escapeAttr(err.message || String(err)) + '</div>';
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
 /* ---------- rendering: day boards ---------- */
 
 /* Tally duties already assigned this week (from state.assignments) for every
@@ -1446,18 +1322,16 @@ $('sessionInput').addEventListener('change', e => {
    fairness can span multiple weeks when the user opts into that. Without an
    import, this is scoped to the current week only, exactly as before. */
 /* Βάση «προηγούμενων εβδομάδων» για τη δίκαιη κατανομή:
-   – αν ο χρήστης έχει ορίσει χειροκίνητη βάση (state.priorCounts), χρησιμοποιείται αυτή·
-   – αλλιώς, με ενεργό «κοινό μέσο όρο», υπολογίζεται από το ιστορικό: για κάθε άτομο
+   – με ενεργό «κοινό μέσο όρο», υπολογίζεται από το ιστορικό: για κάθε άτομο
      έλλειμμα/πλεόνασμα = σύνολο εφημεριών − (εβδομάδες που συμμετείχε × μέσος όρος όλων).
      Όποιος είναι κάτω από τον μέσο όρο παίρνει προτεραιότητα. Οι εξαιρούμενοι δεν μετράνε,
      όποιος δεν έχει ιστορικό θεωρείται «στον μέσο όρο». Η τρέχουσα εβδομάδα (αν έχει ήδη
      αποθηκευτεί με την ίδια ημερομηνία) δεν μετράει διπλά. */
 function historyPrior() {
-  if (state.priorCounts) return state.priorCounts;
   if (!state.autoAvg || !state.model) return null;
   let list;
   try { list = getHistory(); } catch (e) { return null; }
-  const cur = (state.dateLabel || '').trim();
+  const cur = weekLabel();
   list = list.filter(e => !(cur && String(e.dateLabel || '').trim() === cur));
   if (!list.length) return null;
   const tot = {}, wk = {};
@@ -1479,11 +1353,10 @@ function historyPrior() {
 }
 function avgInfoText() {
   if (!state.autoAvg) return '(Κλειστό)';
-  if (state.priorCounts) return '(Τώρα χρησιμοποιείται η βάση που όρισες χειροκίνητα από στατιστικά.)';
-  const cur = (state.dateLabel || '').trim();
+  const cur = weekLabel();
   const n = getHistory().filter(e => !(cur && String(e.dateLabel || '').trim() === cur)).length;
   return n ? '(Ενεργό — υπολογίζεται από ' + n + (n === 1 ? ' προηγούμενη εβδομάδα' : ' προηγούμενες εβδομάδες') + ' του ιστορικού.)'
-           : '(Δεν υπάρχει ακόμα ιστορικό· πάτα «Αποθήκευση στο ιστορικό» στο τέλος κάθε εβδομάδας.)';
+           : '(Δεν υπάρχει ακόμα ιστορικό· δημιουργείται αυτόματα όταν κατεβάσεις το Word.)';
 }
 function updateAvgInfo() { const el = $('avgInfo'); if (el) el.textContent = avgInfoText(); }
 
@@ -1995,36 +1868,10 @@ $('downloadBtn').addEventListener('click', async () => {
     const blob = await buildDocxBytes(model);
     const safeDate = dateStampForFilename();
     const filename = 'Εφημερίες_' + safeDate + '.docx';
-    setStatus(await saveGeneratedFile(blob, filename));
-  } catch (err) {
-    setStatus('Σφάλμα: ' + (err.message || String(err)));
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-$('exportStatsBtn').addEventListener('click', async () => {
-  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
-  const btn = $('exportStatsBtn');
-  btn.disabled = true;
-  try {
-    // Cumulative = whatever base was imported, plus this week's placements — so
-    // re-importing this same file next week continues the running total.
-    const cumulative = new Map(state.priorCounts || []);
-    computeStats().counts.forEach((v, k) => cumulative.set(k, (cumulative.get(k) || 0) + v));
-    const payload = {
-      type: PRIOR_STATS_FILE_TYPE,
-      generatedAt: new Date().toISOString(),
-      dateLabel: state.dateLabel || (state.model.dateLabel || ''),
-      counts: Object.fromEntries(cumulative),
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const safeDate = dateStampForFilename();
-    const filename = 'Στατιστικά_' + safeDate + '.json';
-    setStatus(await saveGeneratedFile(blob, filename, {
-      description: 'Στατιστικά εφημεριών (JSON)',
-      accept: { 'application/json': ['.json'] },
-    }));
+    const msg = await saveGeneratedFile(blob, filename);
+    let hm = '';
+    if (!/ακυρώθηκε/.test(msg)) { try { hm = autoSaveHistory(); } catch (e) { hm = ''; } }
+    setStatus(msg + (hm ? ' ' + hm : ''));
   } catch (err) {
     setStatus('Σφάλμα: ' + (err.message || String(err)));
   } finally {
@@ -2087,7 +1934,7 @@ function buildStatsSnapshot() {
   return {
     id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     savedAt: new Date().toISOString(),
-    dateLabel: state.dateLabel || (state.model.dateLabel || ''),
+    dateLabel: weekLabel(),
     rows,
   };
 }
@@ -2157,6 +2004,7 @@ function renderHistory() {
   const host = $('historyList');
   $('histExcelAllBtn').hidden = !list.length;
   $('histJsonAllBtn').hidden = !list.length;
+  const hc = $('histCount'); if (hc) hc.textContent = list.length ? '(' + list.length + ')' : '';
   if (!list.length) {
     host.innerHTML = '<div style="color:var(--ink-muted); font-size:13px; padding:4px 0;">Δεν υπάρχουν αποθηκευμένα στατιστικά ακόμα.</div>';
     return;
@@ -2171,7 +2019,6 @@ function renderHistory() {
       '<div style="font-size:12px; color:var(--ink-muted);">' + e.rows.length + ' εκπαιδευτικοί' + (tot ? ' · ' + tot + ' εφημερίες' : '') + ' · ' + escHtml(when) + '</div></div>' +
       '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="view" data-id="' + escHtml(e.id) + '">Προβολή</button>' +
       '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="xlsx" data-id="' + escHtml(e.id) + '">Excel</button>' +
-      '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="base" data-id="' + escHtml(e.id) + '">Χρήση ως βάση</button>' +
       '<button type="button" class="btn btn-ghost" style="' + bs + '" data-act="del" data-id="' + escHtml(e.id) + '" aria-label="Διαγραφή">×</button>' +
       '</div>';
   }).join('');
@@ -2200,11 +2047,6 @@ $('historyList').addEventListener('click', async ev => {
       setHistoryStatus('');
       const msg = await saveWorkbook(workbookForEntries([e]), 'Στατιστικά_' + (entryLabel(e).replace(/\s+/g, '_').replace(/[\\\/:*?"<>|]/g, '-')) + '.xlsx');
       setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
-    } else if (act === 'base') {
-      const m = new Map();
-      e.rows.forEach(r => { if (r.cumulative) m.set(r.name, r.cumulative); });
-      applyPriorCounts(m, { dateLabel: entryLabel(e), generatedAt: e.savedAt, teacherCount: m.size });
-      setHistoryStatus('<div class="ok">✓ Το «' + escHtml(entryLabel(e)) + '» ορίστηκε ως βάση για τη δίκαιη κατανομή' + (state.model ? ' και έγινε νέα τοποθέτηση.' : ' (θα εφαρμοστεί όταν ανεβάσεις πρόγραμμα).') + '</div>');
     } else if (act === 'del') {
       addTomb(e.id);
       setHistory(list.filter(x => x.id !== e.id));
@@ -2217,21 +2059,24 @@ $('historyList').addEventListener('click', async ev => {
   }
 });
 
-$('saveHistoryBtn').addEventListener('click', () => {
-  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+function weekLabel() {
+  const lab = String(state.dateLabel || (state.model && state.model.dateLabel) || '').trim();
+  return lab || ('Εβδομάδα ' + todayStamp());
+}
+
+/* Αυτόματη αποθήκευση της εβδομάδας στο ιστορικό (καλείται όταν κατεβαίνει το Word).
+   Ίδια ημερομηνία/ετικέτα εβδομάδας = ενημέρωση της ίδιας εγγραφής, όχι διπλή. */
+function autoSaveHistory() {
+  if (!state.model) return '';
   const snap = buildStatsSnapshot();
   const list = getHistory();
-  const lab = (snap.dateLabel || '').trim();
-  const idx = lab ? list.findIndex(x => (x.dateLabel || '').trim() === lab) : -1;
+  const lab = weekLabel();
+  const idx = list.findIndex(x => String(x.dateLabel || '').trim() === lab);
   if (idx >= 0) { snap.id = list[idx].id; list[idx] = snap; } else { list.push(snap); }
   setHistory(list);
   renderHistory();
-  showHistoryEntry(snap);
-  setHistoryStatus('<div class="ok">✓ ' + (idx >= 0 ? 'Ενημερώθηκε' : 'Αποθηκεύτηκε') + ' στο ιστορικό: ' + escHtml(entryLabel(snap)) + '.' +
-    (historyMemory ? ' <b>Προσοχή:</b> ο browser δεν επιτρέπει μόνιμη αποθήκευση — κατέβασε το «Ιστορικό (JSON)».' : '') + '</div>');
-  setStatus('Αποθηκεύτηκε στο ιστορικό στατιστικών.');
-  const c = $('historyCard'); if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+  return '✓ Η εβδομάδα αποθηκεύτηκε στο ιστορικό' + (historyMemory ? ' (προσωρινά — ο browser δεν επιτρέπει μόνιμη αποθήκευση· κατέβασε αντίγραφο ασφαλείας)' : '') + '.';
+}
 
 $('exportXlsxBtn').addEventListener('click', async () => {
   if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
@@ -2255,10 +2100,10 @@ $('histExcelAllBtn').addEventListener('click', async () => {
 
 $('histJsonAllBtn').addEventListener('click', async () => {
   try {
-    const payload = { type: HISTORY_FILE_TYPE, generatedAt: new Date().toISOString(), entries: getHistory() };
+    const payload = { type: HISTORY_FILE_TYPE, generatedAt: new Date().toISOString(), entries: getHistory(), settings: settingsSnapshot() };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const msg = await saveGeneratedFile(blob, 'Ιστορικό_Στατιστικών_' + todayStamp() + '.json', {
-      description: 'Ιστορικό στατιστικών εφημεριών (JSON)', accept: { 'application/json': ['.json'] },
+    const msg = await saveGeneratedFile(blob, 'Αντίγραφο_Εφημερίες_' + todayStamp() + '.json', {
+      description: 'Αντίγραφο ασφαλείας εφημεριών (JSON)', accept: { 'application/json': ['.json'] },
     });
     setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
   } catch (err) { setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>'); }
@@ -2295,7 +2140,9 @@ $('histImportInput').addEventListener('change', ev => {
       }
       setHistory(list);
       renderHistory();
-      setHistoryStatus('<div class="ok">✓ Εισήχθησαν ' + added + ' εγγραφές.</div>');
+      let restored = false;
+      if (data && data.settings && typeof data.settings === 'object') { applySettings(data.settings); refreshSettingsUI(); persistSettings(true); restored = true; }
+      setHistoryStatus('<div class="ok">✓ Επαναφέρθηκαν ' + added + ' εβδομάδες στο ιστορικό' + (restored ? ' και οι ρυθμίσεις' : '') + '.</div>');
     } catch (err) {
       setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>');
     }
@@ -2388,12 +2235,6 @@ function applySettings(d) {
       if (t && typeof t.a === 'string' && typeof t.b === 'string') customDayTimes[day] = { a: t.a, b: t.b };
     });
   }
-  if ('priorCounts' in d) {
-    if (d.priorCounts && typeof d.priorCounts === 'object') {
-      state.priorCounts = new Map(Object.entries(d.priorCounts).map(([k, v]) => [k, Number(v) || 0]));
-      state.priorMeta = d.priorMeta || null;
-    } else { state.priorCounts = null; state.priorMeta = null; }
-  }
 }
 
 /* Συγχρονίζει τα πεδία της οθόνης με το state (μετά από φόρτωση/λήψη ρυθμίσεων). */
@@ -2407,7 +2248,6 @@ function refreshSettingsUI() {
   setSwitch('avgSwitch', state.autoAvg);
   updateAvgInfo();
   renderPosTable();
-  renderPriorStatsStatus();
 }
 
 function persistSettings(force) {
@@ -2434,8 +2274,8 @@ function renderPersistInfo() {
     ['Εξαιρέσεις ημέρας', dx],
   ];
   el.innerHTML = '<div class="ok">✓ Αποθηκευμένα: ' + parts.map(p => p[0] + ' ' + p[1]).join(' · ') +
-    (state.priorCounts ? ' · Βάση στατιστικών ενεργή' : '') + '</div>' +
-    (settingsMemory ? '<div class="warnbox" style="margin-top:6px;">⚠ Ο browser δεν επιτρέπει μόνιμη αποθήκευση — οι ρυθμίσεις θα χαθούν όταν κλείσεις τη σελίδα. Χρησιμοποίησε «Αποθήκευση επεξεργασίας».</div>' : '');
+    '</div>' +
+    (settingsMemory ? '<div class="warnbox" style="margin-top:6px;">⚠ Ο browser δεν επιτρέπει μόνιμη αποθήκευση — οι ρυθμίσεις θα χαθούν όταν κλείσεις τη σελίδα. Κατέβασε «Αντίγραφο ασφαλείας» από την ενότητα Δεδομένα.</div>' : '');
 }
 
 /* ---------- τρέχουσα επεξεργασία (τοπική αποθήκευση) ---------- */
@@ -2484,9 +2324,8 @@ function clearWorkingState() {
   $('dzMain').textContent = INITIAL_DZ_MAIN;
   $('dzSub').textContent = INITIAL_DZ_SUB;
   $('parseStatus').innerHTML = '';
-  $('sessionStatus').innerHTML = '';
   $('historyView').innerHTML = '';
-  ['fileInput', 'sessionInput'].forEach(id => { const i = $(id); if (i) i.value = ''; });
+  ['fileInput'].forEach(id => { const i = $(id); if (i) i.value = ''; });
   $('dateInput').value = '';
 }
 
@@ -2520,7 +2359,6 @@ function resetEverything(alsoHistory) {
   setSwitch('dblSwitch', state.avoidDoubleShift);
   setSwitch('avgSwitch', state.autoAvg);
   renderPosTable();
-  renderPriorStatsStatus();
   renderHistory();
   setHistoryStatus('');
   settingsLastJson = JSON.stringify(settingsSnapshot());
@@ -2565,6 +2403,7 @@ function renderSyncUI() {
   const on = !!syncCfg;
   $('syncSetup').hidden = on;
   $('syncConnected').hidden = !on;
+  const bd = $('syncBadge'); if (bd) bd.textContent = on ? (syncCfg.lastError ? '⚠ πρόβλημα' : '✓ ενεργός') : '';
   if (!on) { setSyncStatus('<div style="color:var(--ink-muted); font-size:13px;">Δεν έχει γίνει σύνδεση — οι ρυθμίσεις και το ιστορικό μένουν μόνο σε αυτή τη συσκευή.</div>'); return; }
   const when = syncCfg.lastSync ? new Date(syncCfg.lastSync).toLocaleString('el-GR') : '—';
   setSyncStatus(syncCfg.lastError
