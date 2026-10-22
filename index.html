@@ -312,7 +312,16 @@
     <details class="data-sec" id="backupSec">
       <summary>Αντίγραφο ασφαλείας &amp; επαναφορά</summary>
       <p class="sub" style="margin-top:8px;">Προαιρετικό: κατεβάζεις ένα αρχείο με το ιστορικό και τις ρυθμίσεις σου και το φορτώνεις όπου θες. Με τον συγχρονισμό δεν το χρειάζεσαι.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px;">
+      <p class="sub" style="margin:12px 0 0;"><b>Περιορισμοί &amp; ρυθμίσεις:</b> εξαιρέσεις, εξαιρέσεις ημέρας, μάχιμοι, λιγότερες εφημερίες, όρια ημερών, θέσεις. Κατέβασε τους σε αρχείο και φόρτωσέ τους σε οποιαδήποτε συσκευή ή browser.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px;">
+        <button class="btn btn-ghost" id="setExportBtn" type="button">Λήψη περιορισμών (αρχείο)</button>
+        <label class="link-btn" style="cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+          Φόρτωση περιορισμών από αρχείο
+          <input type="file" id="setImportInput" accept=".json,application/json" style="display:none;">
+        </label>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px;">
         <button class="btn btn-ghost" id="histExcelAllBtn" type="button" hidden>Excel όλου του ιστορικού</button>
         <button class="btn btn-ghost" id="histJsonAllBtn" type="button" hidden>Λήψη αντιγράφου (JSON)</button>
         <label class="link-btn" style="cursor:pointer;">
@@ -490,6 +499,14 @@ function isBlank(v) {
   return v === undefined || v === null || String(v).trim() === '';
 }
 
+/* Κελί «ελεύθερης» ώρας: κενό, ή με ΓΡ / ΕΔΥ (και συνδυασμούς τους) — δεν είναι μάθημα. */
+function isFreeCell(v) {
+  if (isBlank(v)) return true;
+  const t = capsNoTonos(v).replace(/P/g, 'Ρ').replace(/E/g, 'Ε').replace(/Y/g, 'Υ');
+  const tokens = t.split(/[^Α-ΩA-Z]+/).filter(Boolean);
+  return tokens.length > 0 && tokens.every(x => x === 'ΓΡ' || x === 'ΕΔΥ');
+}
+
 function parseWorkbook(XLSXref, wb) {
   const wsName = wb.SheetNames[0];
   const ws = wb.Sheets[wsName];
@@ -556,8 +573,8 @@ function parseWorkbook(XLSXref, wb) {
       const v1 = d.p1Col != null ? val(r, d.p1Col) : undefined;
       const v6 = d.p6Col != null ? val(r, d.p6Col) : undefined;
       rec.days[d.name] = {
-        p1: !isBlank(v1), p1Room: isBlank(v1) ? '' : String(v1).trim(),
-        p6: !isBlank(v6), p6Room: isBlank(v6) ? '' : String(v6).trim(),
+        p1: !isFreeCell(v1), p1Room: isFreeCell(v1) ? '' : String(v1).trim(),
+        p6: !isFreeCell(v6), p6Room: isFreeCell(v6) ? '' : String(v6).trim(),
       };
     });
     teachers.push(rec);
@@ -2154,6 +2171,40 @@ $('histJsonAllBtn').addEventListener('click', async () => {
   } catch (err) { setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>'); }
 });
 
+$('setExportBtn').addEventListener('click', async () => {
+  try {
+    const payload = { type: 'efimeries-settings-file', generatedAt: new Date().toISOString(), settings: settingsSnapshot() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const msg = await saveGeneratedFile(blob, 'Περιορισμοί_Εφημερίες_' + todayStamp() + '.json', {
+      description: 'Περιορισμοί & ρυθμίσεις εφημεριών (JSON)', accept: { 'application/json': ['.json'] },
+    });
+    setHistoryStatus('<div class="ok">' + escHtml(msg) + '</div>');
+  } catch (err) { setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>'); }
+});
+
+$('setImportInput').addEventListener('change', ev => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const st = data && data.settings && typeof data.settings === 'object' ? data.settings
+        : (data && typeof data === 'object' && (Array.isArray(data.exclusions) || data.dayExclusions || data.combat || data.lightLoad) ? data : null);
+      if (!st) throw new Error('Το αρχείο δεν περιέχει περιορισμούς εφημεριών.');
+      applySettings(st);
+      refreshSettingsUI();
+      persistSettings(true);
+      if (state.model) { renderDayExclusions(); renderStats(); }
+      setHistoryStatus('<div class="ok">✓ Φορτώθηκαν οι περιορισμοί και οι ρυθμίσεις από το αρχείο.' + (state.model ? ' Πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για να εφαρμοστούν στο τρέχον πρόγραμμα.' : '') + '</div>');
+    } catch (err) {
+      setHistoryStatus('<div class="err">✗ ' + escHtml(err.message || String(err)) + '</div>');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
 $('histImportInput').addEventListener('change', ev => {
   const file = ev.target.files[0];
   if (!file) return;
@@ -2303,6 +2354,7 @@ function persistSettings(force) {
   settingsLastJson = json;
   settingsAt = Date.now();
   try { localStorage.setItem(SETTINGS_KEY, json); localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); settingsMemory = false; } catch (e) { settingsMemory = true; }
+  mirrorSettings(json, settingsAt);
   renderPersistInfo();
   markDirty();
 }
@@ -2409,6 +2461,7 @@ function resetEverything(alsoHistory) {
   settingsLastJson = JSON.stringify(settingsSnapshot());
   settingsAt = Date.now();
   try { localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); } catch (e) { /* αγνόησε */ }
+  mirrorSettings(null, 0);
   sessionAt = Date.now();
   sessionLastJson = '';
   saveLocalSession(null);
@@ -2531,7 +2584,33 @@ function mergeWithRemote(rd) {
   return { type: SYNC_FILE_TYPE, v: 1, settings, settingsAt: sAt, session, sessionAt: seAt, history: hist, tomb };
 }
 
-function persistSettingsRaw() { try { localStorage.setItem(SETTINGS_KEY, settingsLastJson); } catch (e) { /* αγνόησε */ } }
+function persistSettingsRaw() { try { localStorage.setItem(SETTINGS_KEY, settingsLastJson); } catch (e) { /* αγνόησε */ } mirrorSettings(settingsLastJson, settingsAt); }
+
+/* Εφεδρικό αντίγραφο των ρυθμίσεων σε IndexedDB: αν ο browser καθαρίσει το localStorage, οι περιορισμοί επανέρχονται. */
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('efimeries-backup-v1', 1);
+    r.onupgradeneeded = () => { r.result.createObjectStore('kv'); };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function idbPut(key, val) {
+  try {
+    const db = await idbOpen();
+    await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(val, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    db.close();
+  } catch (e) { /* αγνόησε */ }
+}
+async function idbGet(key) {
+  try {
+    const db = await idbOpen();
+    const v = await new Promise((res, rej) => { const tx = db.transaction('kv', 'readonly'); const rq = tx.objectStore('kv').get(key); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); });
+    db.close();
+    return v;
+  } catch (e) { return undefined; }
+}
+function mirrorSettings(json, at) { idbPut('settings', json ? { json, at } : null); }
 
 function syncErrorText(e) {
   if (e && e.status === 401) return 'Το κλειδί (token) δεν ισχύει ή έληξε. Πάτα «Αποσύνδεση» και σύνδεσε ξανά με νέο κλειδί.';
@@ -2658,6 +2737,22 @@ syncCfg = readJson(SYNC_KEY);
 if (syncCfg && (!syncCfg.token || !syncCfg.repo)) syncCfg = null;
 renderPersistInfo();
 renderSyncUI();
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* αγνόησε */ }
+if (!storedSettings) {
+  const startJson = settingsLastJson;
+  idbGet('settings').then(rec => {
+    if (!rec || !rec.json || settingsLastJson !== startJson || readJson(SETTINGS_KEY)) return;
+    try {
+      applySettings(JSON.parse(rec.json));
+      settingsAt = Number(rec.at) || 0;
+      try { localStorage.setItem(SETTINGS_KEY, rec.json); localStorage.setItem(SETTINGS_AT_KEY, String(settingsAt)); } catch (e) { /* αγνόησε */ }
+      settingsLastJson = JSON.stringify(settingsSnapshot());
+      refreshSettingsUI();
+      renderPersistInfo();
+      $('persistInfo').insertAdjacentHTML('beforeend', '<div class="ok" style="margin-top:6px;">✓ Οι περιορισμοί σου επανήλθαν από το εφεδρικό αντίγραφο του browser.</div>');
+    } catch (e) { /* φθαρμένο αντίγραφο: αγνόησέ το */ }
+  });
+}
 setInterval(() => persistSettings(false), 700);
 setInterval(() => watchChanges(false), 3000);
 document.addEventListener('visibilitychange', () => {
