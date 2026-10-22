@@ -379,6 +379,7 @@
     <div style="margin-top:18px;">
       <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Εξαίρεση συναδέλφου για συγκεκριμένες ημέρες (ακόμα κι αν έχει μάθημα)</div>
       <p class="sub" style="margin-top:0;">Διάλεξε εκπαιδευτικό κάτω από την ημέρα στην οποία δεν θέλεις να μπει σε εφημερία. Αν ήδη είναι τοποθετημένος εκείνη την ημέρα, η ημέρα ξαναμοιράζεται αυτόματα χωρίς αυτόν.</p>
+      <div id="leaveBox"></div>
       <div id="dayExclusions"></div>
     </div>
 
@@ -1124,7 +1125,73 @@ function renderMaxDays() {
 
 /* ---------- day-specific exclusions ---------- */
 
+/* Γρήγορη άδεια: διαλέγεις συνάδελφο + ημέρες και μπαίνει εξαίρεση σε όλες μαζί. */
+function renderLeaveBox() {
+  const box = $('leaveBox');
+  if (!box) return;
+  if (!state.model) { box.innerHTML = ''; return; }
+  const days = state.model.days;
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  const byTeacher = {};
+  Object.keys(state.dayExclusions).forEach(d => (state.dayExclusions[d] || []).forEach(n => { (byTeacher[n] = byTeacher[n] || []).push(d); }));
+  const order = d => { const i = days.indexOf(d); return i < 0 ? 99 : i; };
+  const active = Object.keys(byTeacher).sort((a, b) => a.localeCompare(b, 'el')).map(n =>
+    '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) + ' — ' +
+    escapeAttr(byTeacher[n].slice().sort((a, b) => order(a) - order(b)).join(', ')) +
+    ' <button type="button" class="leave-end" data-name="' + escapeAttr(n) + '" aria-label="Τέλος άδειας" title="Τέλος άδειας (αφαίρεση από όλες τις ημέρες)" style="background:none;border:none;cursor:pointer;color:inherit;font:inherit;padding:0 2px;">×</button></span>'
+  ).join('');
+  box.innerHTML =
+    '<div style="border:1px solid var(--line); border-radius:10px; padding:12px; background:var(--surface-2); margin-bottom:10px;">' +
+      '<div style="font-weight:600; font-size:13px; margin-bottom:8px;">Άδεια / απουσία — γρήγορη προσθήκη</div>' +
+      '<div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">' +
+        '<select id="leaveTeacher" style="font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); max-width:100%;">' +
+          '<option value="">Διάλεξε εκπαιδευτικό…</option>' + names.map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('') + '</select>' +
+        days.map(d => '<label style="display:inline-flex; gap:4px; align-items:center; font-size:13px; cursor:pointer;"><input type="checkbox" class="leave-day" value="' + escapeAttr(d) + '"> ' + escapeAttr(d) + '</label>').join('') +
+        '<button type="button" class="btn btn-ghost" id="leaveAllBtn">Όλες οι ημέρες</button>' +
+        '<button type="button" class="btn btn-primary" id="leaveAddBtn">Προσθήκη άδειας</button>' +
+      '</div>' +
+      (active ? '<div style="margin-top:10px; font-size:12.5px; color:var(--ink-muted);">Ενεργές άδειες (το × τελειώνει την άδεια):</div><div class="chips" style="margin-top:6px;">' + active + '</div>' : '') +
+    '</div>';
+  $('leaveAllBtn').addEventListener('click', () => {
+    const cbs = box.querySelectorAll('.leave-day');
+    const all = Array.prototype.every.call(cbs, c => c.checked);
+    cbs.forEach(c => { c.checked = !all; });
+  });
+  $('leaveAddBtn').addEventListener('click', () => {
+    const name = $('leaveTeacher').value;
+    const picked = Array.prototype.filter.call(box.querySelectorAll('.leave-day'), c => c.checked).map(c => c.value);
+    if (!name || !picked.length) { setStatus('Διάλεξε εκπαιδευτικό και τουλάχιστον μία ημέρα.'); return; }
+    addLeave(name, picked);
+  });
+  box.querySelectorAll('.leave-end').forEach(btn => btn.addEventListener('click', e => removeLeave(e.currentTarget.dataset.name)));
+}
+
+function addLeave(name, daysPicked) {
+  let reshuffled = 0;
+  daysPicked.forEach(day => {
+    const list = state.dayExclusions[day] || (state.dayExclusions[day] = []);
+    if (list.indexOf(name) === -1) list.push(name);
+    const a = state.assignments[day];
+    const placed = a && a.slotsA.flat().concat(a.slotsB.flat()).indexOf(name) !== -1;
+    if (placed) { runAssignment(day); reshuffled++; }
+  });
+  if (reshuffled) renderResults(); else renderStats();
+  renderDayExclusions();
+  setStatus('Άδεια για ' + name + ': ' + daysPicked.join(', ') + (reshuffled ? ' — ξαναμοιράστηκαν ' + reshuffled + ' ημέρες.' : '.'));
+}
+
+function removeLeave(name) {
+  Object.keys(state.dayExclusions).forEach(day => {
+    state.dayExclusions[day] = (state.dayExclusions[day] || []).filter(n => n !== name);
+    if (!state.dayExclusions[day].length) delete state.dayExclusions[day];
+  });
+  renderStats();
+  renderDayExclusions();
+  setStatus('Τέλος άδειας για ' + name + '. Πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» αν θέλεις να ξαναμπεί στην κλήρωση.');
+}
+
 function renderDayExclusions() {
+  renderLeaveBox();
   const host = $('dayExclusions');
   if (!host) return;
   if (!state.model) { host.innerHTML = ''; return; }
