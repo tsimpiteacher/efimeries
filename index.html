@@ -543,8 +543,10 @@ function parseWorkbook(XLSXref, wb) {
   for (let c = specCol + 1; c <= range.e.c; c++) {
     const v = val(headerRow, c);
     if (typeof v === 'string' && v.trim().length > 0 && v.trim() !== lastPushedName) {
-      days.push({ name: v.trim(), startCol: c });
       lastPushedName = v.trim();
+      /* Το μπλοκ «Στατιστικά ΓΡ» του αρχείου της εφαρμογής ΓΡ δεν είναι ημέρα. */
+      if (/ΣΤΑΤΙΣΤΙΚ/.test(capsNoTonos(v))) continue;
+      days.push({ name: v.trim(), startCol: c });
     }
   }
   if (days.length === 0) throw new Error('Δεν βρέθηκαν ημέρες (Δευτέρα–Παρασκευή) στο πρόγραμμα.');
@@ -567,6 +569,8 @@ function parseWorkbook(XLSXref, wb) {
     const nameV = val(r, nameCol);
     if (isBlank(nameV)) continue;
     const name = String(nameV).trim();
+    /* Γραμμές συνόλων του αρχείου της εφαρμογής ΓΡ (ΓΡ ανά ώρα, Παρόντες χωρίς μάθημα, ΓΡ ανά ημέρα) δεν είναι εκπαιδευτικοί. */
+    if (/^(ΓΡ ΑΝΑ|ΠΑΡΟΝΤΕΣ|ΣΥΝΟΛ)/.test(capsNoTonos(name).replace(/\s+/g, ' ').trim())) continue;
     const specialty = isBlank(val(r, specCol)) ? '' : String(val(r, specCol)).trim();
     const rec = { name, specialty, days: {} };
     days.forEach(d => {
