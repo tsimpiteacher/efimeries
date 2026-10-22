@@ -259,6 +259,8 @@
     <p class="lede">Ανέβασε το εβδομαδιαίο ωρολόγιο πρόγραμμα (.xlsx) και το εργαλείο υπολογίζει ποιοι εκπαιδευτικοί μπορούν να μπουν σε 1η ή 2η βάρδια, τους τοποθετεί σε θέσεις εφημερίας ανά ημέρα, και παράγει έτοιμο έγγραφο Word για λήψη.</p>
   </div>
 
+  <div id="syncBar" role="button" tabindex="0" style="padding:8px 12px; border:1px solid var(--line); border-radius:10px; font-size:13px; margin:0 0 14px; cursor:pointer; background:var(--surface-2);"></div>
+
   <div class="card">
     <h2><span class="step-no">1</span>Πρόγραμμα εβδομάδας</h2>
     <p class="sub">Το αρχείο .xlsx πρέπει να έχει τη γνωστή μορφή: στήλες «Εκπαιδευτικός» / «Ειδικότητα», έπειτα 5 ημέρες με 7 ώρες η καθεμία. Το ίδιο το αρχείο δεν ανεβαίνει πουθενά· η επεξεργασία γίνεται στον browser σου (η τρέχουσα επεξεργασία κρατιέται σε αυτή τη συσκευή και, αν συνδέσεις συγχρονισμό, στο δικό σου ιδιωτικό repo).</p>
@@ -274,7 +276,8 @@
   </div>
 
   <div class="card" id="dataCard">
-    <h2>Δεδομένα &amp; αποθήκευση</h2>
+    <details id="dataSec">
+    <summary style="cursor:pointer; font-weight:700; font-size:16px;">Δεδομένα, ιστορικό &amp; συγχρονισμός</summary>
     <p class="sub"><b>Όλα αποθηκεύονται αυτόματα</b> σε αυτή τη συσκευή: οι ρυθμίσεις και οι περιορισμοί σου, η τρέχουσα επεξεργασία και το ιστορικό εβδομάδων. Όταν κατεβάζεις το Word, η εβδομάδα μπαίνει μόνη της στο ιστορικό (απ’ αυτό υπολογίζεται ο κοινός μέσος όρος). Δεν χρειάζεται να πατήσεις «αποθήκευση» πουθενά. Για να έχεις τα ίδια σε κινητό και υπολογιστή, ενεργοποίησε τον συγχρονισμό.</p>
     <div class="parse-status" id="persistInfo"></div>
     <div class="parse-status" id="historyStatus"></div>
@@ -346,10 +349,11 @@
       </div>
       </div>
     </details>
+    </details>
   </div>
 
   <div class="card" id="settingsCard" hidden>
-    <h2><span class="step-no">2</span>Ρυθμίσεις εφημερίας</h2>
+    <h2><span class="step-no">2</span>Άδειες &amp; ρυθμίσεις</h2>
     <p class="sub">Οι κανόνες: 1η βάρδια = μη κενό κελί στην 1η ώρα εκείνης της ημέρας· 2η βάρδια = μη κενό κελί στην 6η ώρα. Προσαρμόζεις ό,τι χρειάζεται πριν την τοποθέτηση.</p>
 
     <div class="grid2">
@@ -357,7 +361,11 @@
       <label class="field"><span class="lbl">Περίοδος (εμφανίζεται ως «από …»)</span><input type="text" id="dateInput"></label>
     </div>
 
-    <div class="switch-row">
+    <div id="leaveBox" style="margin-top:16px;"></div>
+
+    <details class="data-sec" id="permSec">
+    <summary>Πάγιες ρυθμίσεις (αλλάζουν σπάνια)</summary>
+    <div class="switch-row" style="margin-top:12px;">
       <div class="switch" id="eaeSwitch" role="switch" aria-checked="false" tabindex="0"><div class="knob"></div></div>
       <div class="switch-copy"><b>Συμπερίληψη εκπαιδευτικών ΕΑΕ</b><span>Όταν είναι κλειστό, όσοι έχουν «ΕΑΕ» στην ειδικότητα δεν μπαίνουν καθόλου στην κλήρωση εφημεριών.</span></div>
     </div>
@@ -371,15 +379,14 @@
     </div>
 
     <div style="margin-top:16px;">
-      <label class="field"><span class="lbl">Μόνιμα εξαιρούμενοι από εφημερίες (ένα όνομα/επώνυμο ανά γραμμή)</span>
-        <textarea id="exclusionInput" rows="5"></textarea>
-      </label>
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Μόνιμα εξαιρούμενοι από εφημερίες</div>
+      <div id="exclList"></div>
+      <textarea id="exclusionInput" rows="1" hidden></textarea>
     </div>
 
     <div style="margin-top:18px;">
       <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Εξαίρεση συναδέλφου για συγκεκριμένες ημέρες (ακόμα κι αν έχει μάθημα)</div>
       <p class="sub" style="margin-top:0;">Διάλεξε εκπαιδευτικό κάτω από την ημέρα στην οποία δεν θέλεις να μπει σε εφημερία. Αν ήδη είναι τοποθετημένος εκείνη την ημέρα, η ημέρα ξαναμοιράζεται αυτόματα χωρίς αυτόν.</p>
-      <div id="leaveBox"></div>
       <div id="dayExclusions"></div>
     </div>
 
@@ -411,6 +418,7 @@
         </table>
       </div>
     </div>
+    </details>
   </div>
 
   <div id="results">
@@ -426,17 +434,21 @@
   </div>
 
   <div class="card" id="footnoteCard" hidden>
-    <h2><span class="step-no">3</span>Σημειώσεις κάτω από τον πίνακα</h2>
+    <details class="data-sec" style="border-top:0; margin-top:0; padding:0;">
+    <summary>Σημειώσεις κάτω από τον πίνακα (πάγιο κείμενο)</summary>
     <p class="sub">Το κείμενο εμφανίζεται αυτούσιο στο τέλος του εγγράφου Word (οδηγίες εποπτείας κ.λπ.). Προσάρμοσέ το ελεύθερα.</p>
     <textarea id="footnote" rows="9"></textarea>
+    </details>
   </div>
 
   <div class="card" id="statsCard" hidden>
-    <h2><span class="step-no">4</span>Στατιστικά &amp; έλεγχος λαθών</h2>
+    <h2><span class="step-no">3</span>Έλεγχος λαθών &amp; στατιστικά</h2>
     <p class="sub">Αυτόματος έλεγχος πριν τη λήψη: άγνωστα ονόματα (πιθανό τυπογραφικό), εξαιρούμενοι που τοποθετήθηκαν κατά λάθος, διπλές τοποθετήσεις, ή κάποιος τοποθετημένος σε ώρα που δεν έχει μάθημα. Ενημερώνεται αυτόματα.</p>
     <div class="parse-status" id="statsSummary"></div>
     <div id="statsIssues"></div>
-    <div style="margin-top:16px;">
+    <details class="data-sec" style="margin-top:16px;">
+    <summary>Εφημερίες ανά εκπαιδευτικό — πίνακας &amp; Excel</summary>
+    <div style="margin-top:10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
         <div class="lbl" style="font-size:13px; font-weight:600;">Εφημερίες ανά εκπαιδευτικό</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -453,6 +465,7 @@
         </table>
       </div>
     </div>
+    </details>
   </div>
 
   <div class="actionbar" id="actionbar" hidden>
@@ -1040,14 +1053,14 @@ function renderLightLoad() {
     if (state.lightLoad.indexOf(name) === -1) state.lightLoad.push(name);
     renderLightLoad();
     renderStats();
-    setStatus('Ο/Η ' + name + ' θα έχει λιγότερες εφημερίες — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Ο/Η ' + name + ' θα έχει λιγότερες εφημερίες');
   });
   host.querySelectorAll('.ll-remove').forEach(btn => btn.addEventListener('click', e => {
     const name = e.currentTarget.dataset.name;
     state.lightLoad = state.lightLoad.filter(n => n !== name);
     renderLightLoad();
     renderStats();
-    setStatus('Ο/Η ' + name + ' επανήλθε στο κανονικό μοίρασμα — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Ο/Η ' + name + ' επανήλθε στο κανονικό μοίρασμα');
   }));
 }
 
@@ -1072,14 +1085,14 @@ function renderCombat() {
     if (state.combat.indexOf(name) === -1) state.combat.push(name);
     renderCombat();
     renderStats();
-    setStatus('Ο/Η ' + name + ' ορίστηκε ως μάχιμος/η (ισόγειο ή 3ος) — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Ο/Η ' + name + ' ορίστηκε ως μάχιμος/η (ισόγειο ή 3ος)');
   });
   host.querySelectorAll('.cb-remove').forEach(btn => btn.addEventListener('click', e => {
     const name = e.currentTarget.dataset.name;
     state.combat = state.combat.filter(n => n !== name);
     renderCombat();
     renderStats();
-    setStatus('Ο/Η ' + name + ' δεν είναι πια στους μάχιμους — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Ο/Η ' + name + ' δεν είναι πια στους μάχιμους');
   }));
 }
 
@@ -1109,17 +1122,17 @@ function renderMaxDays() {
     if (!name) return;
     state.maxDays[name] = Math.min(2, nDays);
     renderMaxDays(); renderStats();
-    setStatus('Ορίστηκε όριο ' + state.maxDays[name] + ' ημερών για ' + name + ' — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Ορίστηκε όριο ' + state.maxDays[name] + ' ημερών για ' + name + '');
   });
   host.querySelectorAll('.md-val').forEach(el => el.addEventListener('change', e => {
     state.maxDays[e.target.dataset.name] = parseInt(e.target.value, 10);
     renderStats();
-    setStatus('Το όριο ημερών άλλαξε — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Το όριο ημερών άλλαξε');
   }));
   host.querySelectorAll('.md-remove').forEach(btn => btn.addEventListener('click', e => {
     delete state.maxDays[e.currentTarget.dataset.name];
     renderMaxDays(); renderStats();
-    setStatus('Αφαιρέθηκε το όριο ημερών — πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για εφαρμογή.');
+    autoRegen('Αφαιρέθηκε το όριο ημερών');
   }));
 }
 
@@ -1181,13 +1194,13 @@ function addLeave(name, daysPicked) {
 }
 
 function removeLeave(name) {
+  const affected = Object.keys(state.dayExclusions).filter(d => (state.dayExclusions[d] || []).indexOf(name) !== -1 && state.model && state.model.days.indexOf(d) !== -1);
   Object.keys(state.dayExclusions).forEach(day => {
     state.dayExclusions[day] = (state.dayExclusions[day] || []).filter(n => n !== name);
     if (!state.dayExclusions[day].length) delete state.dayExclusions[day];
   });
-  renderStats();
   renderDayExclusions();
-  setStatus('Τέλος άδειας για ' + name + '. Πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» αν θέλεις να ξαναμπεί στην κλήρωση.');
+  rerunDays(affected, 'Τέλος άδειας για ' + name);
 }
 
 function renderDayExclusions() {
@@ -1240,9 +1253,8 @@ function addDayExclusion(day, name) {
 function removeDayExclusion(day, name) {
   state.dayExclusions[day] = (state.dayExclusions[day] || []).filter(n => n !== name);
   if (!state.dayExclusions[day].length) delete state.dayExclusions[day];
-  renderStats();
   renderDayExclusions();
-  setStatus('Αφαιρέθηκε η εξαίρεση του/της ' + name + ' για ' + day + '.');
+  rerunDays([day], 'Αφαιρέθηκε η εξαίρεση του/της ' + name + ' για ' + day);
 }
 
 /* ---------- rendering: settings ---------- */
@@ -1269,17 +1281,19 @@ function renderPosTable() {
   body.querySelectorAll('.pos-a-in').forEach(el => el.addEventListener('input', e => {
     state.positions[+e.target.dataset.idx].countA = Math.max(0, parseInt(e.target.value, 10) || 0);
     renderStats();
+    autoRegenSoon('Άλλαξε ο αριθμός θέσεων');
   }));
   body.querySelectorAll('.pos-b-in').forEach(el => el.addEventListener('input', e => {
     state.positions[+e.target.dataset.idx].countB = Math.max(0, parseInt(e.target.value, 10) || 0);
     renderStats();
+    autoRegenSoon('Άλλαξε ο αριθμός θέσεων');
   }));
 }
 
 function escapeAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
 
-$('eaeSwitch').addEventListener('click', () => toggleSwitch('eaeSwitch', v => state.includeEAE = v));
-$('dblSwitch').addEventListener('click', () => toggleSwitch('dblSwitch', v => state.avoidDoubleShift = v));
+$('eaeSwitch').addEventListener('click', () => { toggleSwitch('eaeSwitch', v => state.includeEAE = v); autoRegen('Άλλαξε η συμπερίληψη εκπαιδευτικών ΕΑΕ'); });
+$('dblSwitch').addEventListener('click', () => { toggleSwitch('dblSwitch', v => state.avoidDoubleShift = v); autoRegen('Άλλαξε ο κανόνας διπλής εφημερίας'); });
 $('avgSwitch').addEventListener('click', () => {
   toggleSwitch('avgSwitch', v => { state.autoAvg = v; });
   updateAvgInfo();
@@ -1331,6 +1345,7 @@ function revealMainUI() {
   setSwitch('avgSwitch', state.autoAvg);
   updateAvgInfo();
   renderPosTable();
+  renderExclusions();
   renderDayExclusions();
   renderLightLoad();
   renderCombat();
@@ -1476,6 +1491,7 @@ function computeDaysUsed(excludeDay) {
 }
 
 function runAssignment(dayName, priorCounts, daysUsed) {
+  const wasAuto = assignmentsAreAuto();
   state.assignments[dayName] = assignDay(state.model, dayName, {
     exclusionList: state.exclusions,
     dayExcludedNames: state.dayExclusions[dayName] || [],
@@ -1488,6 +1504,7 @@ function runAssignment(dayName, priorCounts, daysUsed) {
     positions: state.positions,
     priorCounts: priorCounts !== undefined ? priorCounts : computeWeekCounts(dayName),
   });
+  if (wasAuto) markAutoClean();
 }
 
 /* Assign every day of the week in one pass, carrying an accumulating duty
@@ -1506,6 +1523,7 @@ function runAssignmentsForAllDays() {
     all.forEach(n => counts.set(n, (counts.get(n) || 0) + 1));
     new Set(all).forEach(n => daysUsed.set(n, (daysUsed.get(n) || 0) + 1));
   });
+  markAutoClean();
 }
 
 /* ---------- statistics & error checking ---------- */
@@ -1862,6 +1880,86 @@ $('regenBtn').addEventListener('click', () => {
 });
 
 function setStatus(msg) { $('statusText').textContent = msg; }
+
+/* ---------- αυτόματο ξαναμοίρασμα όταν αλλάζει μια ρύθμιση ---------- */
+let autoSnap = '';
+let autoTimer = null;
+function snapAssign() { try { return JSON.stringify(state.assignments); } catch (e) { return ''; } }
+function markAutoClean() { autoSnap = snapAssign(); }
+/* true όσο οι τοποθετήσεις είναι ακριβώς όπως τις έβγαλε το πρόγραμμα (χωρίς χειροκίνητες διορθώσεις) */
+function assignmentsAreAuto() { return !!state.model && autoSnap !== '' && snapAssign() === autoSnap; }
+function autoRegen(msg) {
+  clearTimeout(autoTimer);
+  if (!state.model) { setStatus(msg); return; }
+  if (assignmentsAreAuto()) {
+    state.assignments = {};
+    runAssignmentsForAllDays();
+    renderResults();
+    setStatus(msg + ' — η εβδομάδα ξαναμοιράστηκε αυτόματα.');
+  } else {
+    renderStats();
+    setStatus(msg + ' — δεν ξαναμοιράστηκε γιατί έχεις κάνει χειροκίνητες αλλαγές· πάτα «Νέα τοποθέτηση (όλες οι ημέρες)» για να εφαρμοστεί.');
+  }
+}
+function autoRegenSoon(msg) { clearTimeout(autoTimer); autoTimer = setTimeout(() => autoRegen(msg), 700); }
+function rerunDays(days, msg) {
+  if (!days.length) { renderStats(); setStatus(msg + '.'); return; }
+  if (assignmentsAreAuto()) {
+    days.forEach(d => runAssignment(d));
+    renderResults();
+    setStatus(msg + ' — ξαναμοιράστηκε.');
+  } else {
+    renderStats();
+    setStatus(msg + ' — η τοποθέτηση δεν άλλαξε (έχεις χειροκίνητες αλλαγές)· πάτα «Νέα τοποθέτηση» αν θέλεις.');
+  }
+}
+
+/* ---------- μόνιμες εξαιρέσεις: επιλογή από λίστα ---------- */
+function renderExclusions() {
+  const host = $('exclList');
+  if (!host) return;
+  if (!state.model) { host.innerHTML = ''; return; }
+  const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
+  const chips = state.exclusions.map((n, i) =>
+    '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) +
+    ' <button type="button" class="ex-remove" data-i="' + i + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;line-height:1;padding:0 2px;">×</button></span>'
+  ).join('');
+  const opts = names.filter(n => !isExcluded(n, state.exclusions))
+    .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
+  host.innerHTML = '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
+    '<div style="display:flex; gap:6px; flex-wrap:wrap; flex:1; min-width:140px;">' + (chips || '<span style="color:var(--ink-muted); font-size:13px;">Κανένας</span>') + '</div>' +
+    '<select id="exAdd" style="font:inherit; font-size:13px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--surface); color:var(--ink); max-width:230px;">' +
+    '<option value="">+ Μόνιμη εξαίρεση…</option>' + opts + '</select></div>';
+  $('exAdd').addEventListener('change', e => {
+    const name = e.target.value;
+    if (!name) return;
+    state.exclusions.push(name);
+    $('exclusionInput').value = state.exclusions.join('\n');
+    renderExclusions();
+    autoRegen('Ο/Η ' + name + ' εξαιρέθηκε μόνιμα από τις εφημερίες');
+  });
+  host.querySelectorAll('.ex-remove').forEach(btn => btn.addEventListener('click', e => {
+    const i = +e.currentTarget.dataset.i;
+    const name = state.exclusions[i];
+    state.exclusions.splice(i, 1);
+    $('exclusionInput').value = state.exclusions.join('\n');
+    renderExclusions();
+    autoRegen('Ο/Η ' + name + ' δεν είναι πια μόνιμα εξαιρούμενος/η');
+  }));
+}
+
+/* ---------- ένδειξη συγχρονισμού στην κορυφή ---------- */
+function renderSyncBar() {
+  const el = $('syncBar');
+  if (!el) return;
+  let ok = true, txt;
+  if (!syncCfg) { ok = false; txt = '⚠ Χωρίς συγχρονισμό — οι περιορισμοί μένουν μόνο σε αυτή τη συσκευή. Πάτα για ρύθμιση.'; }
+  else if (syncCfg.lastError) { ok = false; txt = '⚠ Πρόβλημα συγχρονισμού — πάτα για λεπτομέρειες.'; }
+  else txt = '✓ Συγχρονισμένο με τις άλλες συσκευές' + (syncCfg.lastSync ? ' · ' + new Date(syncCfg.lastSync).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) : '');
+  el.textContent = txt;
+  el.style.borderColor = ok ? 'var(--accent)' : 'var(--warn)';
+  el.style.color = ok ? 'var(--accent-soft-ink)' : 'var(--warn)';
+}
 
 let downloadsApi = null;
 (function initDownloads() {
@@ -2569,6 +2667,7 @@ function b64ToUtf8(s) {
 function setSyncStatus(html) { const el = $('syncStatus'); if (el) el.innerHTML = html || ''; }
 
 function renderSyncUI() {
+  renderSyncBar();
   const on = !!syncCfg;
   $('syncSetup').hidden = on;
   $('syncConnected').hidden = !on;
@@ -2807,6 +2906,9 @@ histLastRaw = JSON.stringify(getHistory());
 syncCfg = readJson(SYNC_KEY);
 if (syncCfg && (!syncCfg.token || !syncCfg.repo)) syncCfg = null;
 renderPersistInfo();
+$('dataCard').parentNode.insertBefore($('dataCard'), $('actionbar'));
+$('syncBar').addEventListener('click', () => { $('dataSec').open = true; $('syncSec').open = true; $('syncSec').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+$('syncBar').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('syncBar').click(); } });
 renderSyncUI();
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* αγνόησε */ }
 if (!storedSettings) {
