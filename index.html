@@ -577,6 +577,11 @@ function parseWorkbook(XLSXref, wb) {
     }
     d.endCol = endCol; d.p1Col = p1Col; d.p6Col = p6Col;
   });
+  /* Μια «ημέρα» χωρίς καμία στήλη ώρας 1 ή 6 (π.χ. το μπλοκ στατιστικών του αρχείου ΓΡ) δεν είναι ημέρα. */
+  {
+    const real = days.filter(d => d.p1Col != null || d.p6Col != null);
+    if (real.length && real.length < days.length) { days.length = 0; real.forEach(d => days.push(d)); }
+  }
 
   const teachers = [];
   for (let r = periodRow + 1; r <= range.e.r; r++) {
