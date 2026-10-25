@@ -1,5 +1,5 @@
 /* Service worker: offline χρήση μετά την πρώτη φόρτωση. */
-const CACHE = 'efimeries-v7';
+const CACHE = 'efimeries-v10';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
