@@ -14,7 +14,7 @@
 <title>Πίνακας Εφημεριών</title>
 </head>
 <body>
-<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Εφημερίες ⇄ ΓΡ (ίδιο κομμάτι και στις δύο εφαρμογές) ===== -->
+<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Εφημερίες ⇄ ΓΡ ⇄ Αναπληρώσεις (ίδιο κομμάτι σε όλες τις εφαρμογές) ===== -->
 <nav class="sbar" id="suiteBar" data-app="ef" aria-label="Εφαρμογές">
   <a class="sbar-home" href="../" title="Όλες οι εφαρμογές">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
@@ -29,11 +29,15 @@
   <div class="sbar-seg" role="group" aria-label="Εναλλαγή εφαρμογής">
     <a class="sbar-opt ef" href="../efimeries/" data-to="ef">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 3v3.5M16 3v3.5"/></svg>
-      <span>Εφημερίες</span>
+      <span class="l">Εφημερίες</span><span class="s">Εφημ.</span>
     </a>
     <a class="sbar-opt gr" href="../gr/" data-to="gr">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M9 9v11.5M15 9v11.5"/></svg>
       <span>ΓΡ</span>
+    </a>
+    <a class="sbar-opt an" href="../anaplirwseis/" data-to="an">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M16 7.5h5M18.5 5v5"/></svg>
+      <span class="l">Αναπληρώσεις</span><span class="s">Αναπλ.</span>
     </a>
   </div>
   </div>
@@ -41,23 +45,23 @@
 <style>
   .sbar{
     --sb-bg:#FFFFFF; --sb-line:rgba(20,30,50,.13); --sb-ink:#1D2433; --sb-muted:#5A6577; --sb-track:rgba(20,30,50,.06);
-    --sb-ef:#2F6B3F; --sb-gr:#C62828; --sb-on-ink:#FFFFFF;
+    --sb-ef:#2F6B3F; --sb-gr:#C62828; --sb-an:#3949AB; --sb-on-ink:#FFFFFF;
     box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:10px;
     max-width:var(--sb-max,1000px); margin:0 auto 18px; padding:6px;
     background:var(--sb-bg); border:1px solid var(--sb-line); border-radius:14px;
     box-shadow:0 1px 2px rgba(20,30,50,.05);
     font:600 14px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--sb-ink);
   }
-  .sbar[data-app="gr"]{--sb-max:1500px;}
+  .sbar[data-app="gr"]{--sb-max:1500px;} .sbar[data-app="an"]{--sb-max:1100px;}
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]) .sbar{
       --sb-bg:rgba(255,255,255,.05); --sb-line:rgba(255,255,255,.14); --sb-ink:#E8EDF5; --sb-muted:#A3AEC0; --sb-track:rgba(255,255,255,.06);
-      --sb-ef:#7BD08F; --sb-gr:#EF5350; --sb-on-ink:#0D1410;
+      --sb-ef:#7BD08F; --sb-gr:#EF5350; --sb-an:#9FA8FF; --sb-on-ink:#0D1410;
     }
   }
   :root[data-theme="dark"] .sbar{
     --sb-bg:rgba(255,255,255,.05); --sb-line:rgba(255,255,255,.14); --sb-ink:#E8EDF5; --sb-muted:#A3AEC0; --sb-track:rgba(255,255,255,.06);
-    --sb-ef:#7BD08F; --sb-gr:#EF5350; --sb-on-ink:#0D1410;
+    --sb-ef:#7BD08F; --sb-gr:#EF5350; --sb-an:#9FA8FF; --sb-on-ink:#0D1410;
   }
   .sbar *{box-sizing:border-box;}
   .sbar a{color:inherit; text-decoration:none; -webkit-tap-highlight-color:transparent;}
@@ -77,8 +81,12 @@
   .sbar-opt[aria-current="page"]{color:var(--sb-on-ink) !important; cursor:default;}
   .sbar-opt.ef[aria-current="page"]{background:var(--sb-ef);}
   .sbar-opt.gr[aria-current="page"]{background:var(--sb-gr);}
+  .sbar-opt.an[aria-current="page"]{background:var(--sb-an);}
+  .sbar-opt .s{display:none;}
+  @media (max-width:640px){ .sbar-opt .l{display:none;} .sbar-opt .s{display:inline;} .sbar-opt{padding:7px 9px; gap:5px;} .sbar-opt svg{display:none;} }
   .sbar a:focus-visible{outline:2px solid var(--sb-ink); outline-offset:2px;}
-  @media (max-width:400px){ .sbar-hl{display:none;} .sbar-opt{padding:7px 11px;} }
+  @media (max-width:520px){ .sbar-hl{display:none;} .sbar-home{padding:8px;} }
+  @media (max-width:360px){ .sbar-opt{padding:7px 7px;} .sbar-theme{width:32px;} }
   @media (prefers-reduced-motion: reduce){ .sbar-opt{transition:none;} }
   @media print{ .sbar{display:none !important;} }
 </style>
@@ -97,9 +105,9 @@
   var done = false;
   function prefetch() {
     if (done) return; done = true;
-    var other = bar.querySelector('.sbar-opt:not([aria-current])');
-    if (!other) return;
-    var l = document.createElement('link'); l.rel = 'prefetch'; l.href = other.href; document.head.appendChild(l);
+    Array.prototype.forEach.call(bar.querySelectorAll('.sbar-opt:not([aria-current])'), function (other) {
+      var l = document.createElement('link'); l.rel = 'prefetch'; l.href = other.href; document.head.appendChild(l);
+    });
   }
   bar.addEventListener('pointerenter', prefetch, { once: true });
   bar.addEventListener('touchstart', prefetch, { once: true, passive: true });
@@ -370,6 +378,13 @@
   .reminders .rm{font-size:12.5px; line-height:1.45; padding:7px 10px; border-radius:7px; background:var(--accent2-soft); color:var(--accent2-soft-ink);}
   .reminders .rm.err{background:var(--warn-soft); color:var(--warn);}
   .actionbar .status{font-size:13px; color:var(--ink-muted); flex:1; min-width:180px;}
+  @media (max-width:620px){
+    .actionbar{padding:10px 12px; gap:8px; bottom:10px;}
+    .actionbar .reminders{max-height:4.6em;}
+    .actionbar .status{flex:1 1 100%; min-width:0; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .actionbar .btn{padding:9px 12px; font-size:13.5px; flex:1 1 0; justify-content:center; text-align:center !important;}
+    .actionbar .btn .long{display:none;}
+  }
   .btn{
     font:inherit; font-weight:700; font-size:14px; border-radius:9px; padding:11px 18px; cursor:pointer;
     border:1px solid transparent; display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
@@ -425,6 +440,13 @@
     <details class="data-sec" id="syncSec">
       <summary>Συγχρονισμός συσκευών <span class="data-badge" id="syncBadge"></span></summary>
       <p class="sub">Για να βλέπεις την ίδια εικόνα — ρυθμίσεις, ιστορικό στατιστικών και τρέχουσα επεξεργασία — σε κινητό και υπολογιστή, σύνδεσε την εφαρμογή με ένα <b>ιδιωτικό</b> repo στο GitHub. Τα δεδομένα μένουν στον δικό σου λογαριασμό· το κλειδί αποθηκεύεται μόνο στη συσκευή.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:10px 0 4px;">
+        <button class="btn btn-primary" id="fbBtn" type="button">Σύνδεση με Google</button>
+        <span id="fbStatus" style="font-size:13px; color:var(--ink-muted);">Έλεγχος σύνδεσης…</span>
+      </div>
+      <p class="sub" style="margin:4px 0 10px;">Ίδιος λογαριασμός με την εφαρμογή ΓΡ: σε κάθε συσκευή μία σύνδεση αρκεί για όλη τη σουίτα. Τα δεδομένα φυλάσσονται στον δικό σου λογαριασμό και τα βλέπεις μόνο εσύ.</p>
+      <details id="ghBox" style="margin-top:6px;">
+      <summary style="cursor:pointer; font-weight:600; font-size:13px;">Παλιός τρόπος: συγχρονισμός μέσω GitHub</summary>
       <div class="parse-status" id="syncStatus"></div>
       <div id="syncSetup">
         <details style="margin:8px 0 12px; font-size:13px;">
@@ -447,6 +469,7 @@
           <button class="btn btn-ghost" id="syncDisconnectBtn" type="button">Αποσύνδεση αυτής της συσκευής</button>
         </div>
       </div>
+      </details>
     </details>
     <details class="data-sec" id="backupSec">
       <summary>Αντίγραφο ασφαλείας &amp; επαναφορά</summary>
@@ -530,6 +553,10 @@
       <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Εκπαιδευτικοί με λιγότερες εφημερίες (αν γίνεται)</div>
       <p class="sub" style="margin-top:0;">Όσοι επιλεγούν εδώ θα παίρνουν περίπου τις μισές εφημερίες σε σχέση με τους υπόλοιπους — όχι αυστηρά: αν σε κάποια ώρα δεν υπάρχουν αρκετοί διαθέσιμοι, μπορεί να τοποθετηθούν. Ισχύει στην επόμενη «Νέα τοποθέτηση».</p>
       <div id="lightLoad"></div>
+      <div class="switch-row" style="margin-top:12px;">
+        <div class="switch on" id="grLightSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
+        <div class="switch-copy"><b>Λιγότερες εφημερίες σε όσους έχουν επιβάρυνση ΓΡ</b><span id="grLightInfo">Όσοι έχουν 2+ ΓΡ στην εφαρμογή ΓΡ αυτής της συσκευής μετράνε κι εδώ σαν «λιγότερες εφημερίες», ώστε να ισορροπεί το συνολικό φορτίο.</span></div>
+      </div>
     </div>
 
     <div style="margin-top:18px;">
@@ -609,7 +636,7 @@
     <div class="status" id="statusText">Έτοιμο για λήψη.</div>
     <button class="btn btn-ghost" id="regenBtn" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
-      Νέα τοποθέτηση (όλες οι ημέρες)
+      Νέα τοποθέτηση<span class="long">&nbsp;(όλες οι ημέρες)</span>
     </button>
     <button class="btn btn-primary" id="downloadBtn" type="button">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
@@ -756,9 +783,37 @@ function parseWorkbook(XLSXref, wb) {
   return { teachers, days: days.map(d => d.name), school, dateLabel };
 }
 
+/* Εξαίρεση: ακριβές όνομα (χωρίς τόνους/κενά). Κομμάτι ονόματος μετράει μόνο αν ταιριάζει σε ΕΝΑΝ εκπαιδευτικό,
+   ώστε π.χ. «ΜΑΡΙΑ» να μην εξαιρεί όλες τις Μαρίες. */
+function exKey(s) { return capsNoTonos(s).replace(/\s+/g, ' ').trim(); }
+function exclusionMatches(entry, names) {
+  const k = exKey(entry);
+  if (!k) return [];
+  const exact = names.filter(n => exKey(n) === k);
+  return exact.length ? exact : names.filter(n => exKey(n).indexOf(k) !== -1);
+}
+let exMemo = { model: null, list: '', set: null };
 function isExcluded(name, exclusionList) {
-  const n = normGr(name);
-  return exclusionList.some(x => x.trim() && n.indexOf(normGr(x)) !== -1);
+  if (!state.model) { const n = exKey(name); return exclusionList.some(x => exKey(x) && n.indexOf(exKey(x)) !== -1); }
+  const sig = exclusionList.join('\u0001');
+  if (exMemo.model !== state.model || exMemo.list !== sig) {
+    const names = state.model.teachers.map(t => t.name), set = new Set();
+    exclusionList.forEach(x => { const m = exclusionMatches(x, names); if (m.length === 1) set.add(exKey(m[0])); else if (m.length > 1 && exKey(x) && m.every(n => exKey(n) === exKey(x))) m.forEach(n => set.add(exKey(n))); });
+    exMemo = { model: state.model, list: sig, set };
+  }
+  return exMemo.set.has(exKey(name));
+}
+/* Συνολικό φορτίο: όσοι έχουν 2+ ΓΡ στην εφαρμογή ΓΡ (ίδια συσκευή) παίρνουν λιγότερες εφημερίες, αν είναι ενεργό. */
+function grExtraNames() {
+  if (!state.grLight || !state.model) return [];
+  let q; try { q = (JSON.parse(localStorage.getItem('gr-settings-v1')) || {}).quotas || {}; } catch (e) { return []; }
+  const big = Object.keys(q).filter(n => (+q[n] || 0) >= 2).map(exKey);
+  return state.model.teachers.map(t => t.name).filter(n => big.indexOf(exKey(n)) !== -1);
+}
+function effectiveLight() {
+  const out = state.lightLoad.slice();
+  grExtraNames().forEach(n => { if (out.indexOf(n) === -1) out.push(n); });
+  return out;
 }
 function isEAE(specialty) { return normGr(specialty).indexOf('ΕΑΕ') !== -1; }
 
@@ -1138,6 +1193,7 @@ const state = {
   maxDays: {},           // teacher name -> max number of duty days this week
   combat: [],            // «μάχιμοι»: όταν έχουν εφημερία μπαίνουν μόνο ισόγειο ή 3ο όροφο
   lightLoad: [],         // teacher names who should get fewer duties if possible
+  grLight: true,         // όσοι έχουν επιβάρυνση ΓΡ (2+) μετράνε σαν «λιγότερες εφημερίες»
   dayExclusions: {},     // dayName -> [teacher names excluded just for that day]
   positions: [
     { label: 'ΙΣΟΓΕΙΟ - ΜΠΑΣΚΕΤ (Α)', countA: 3, countB: 3 },
@@ -1445,7 +1501,8 @@ $('avgSwitch').addEventListener('click', () => {
     setStatus(state.autoAvg ? 'Έγινε νέα τοποθέτηση με κοινό μέσο όρο εβδομάδων.' : 'Έγινε νέα τοποθέτηση μόνο με βάση την τρέχουσα εβδομάδα.');
   }
 });
-[$('eaeSwitch'), $('dblSwitch'), $('avgSwitch')].forEach(el => el.addEventListener('keydown', e => {
+$('grLightSwitch').addEventListener('click', () => { toggleSwitch('grLightSwitch', v => state.grLight = v); autoRegen(state.grLight ? 'Όσοι έχουν επιβάρυνση ΓΡ παίρνουν λιγότερες εφημερίες' : 'Η επιβάρυνση ΓΡ δεν επηρεάζει πια τις εφημερίες'); });
+[$('eaeSwitch'), $('dblSwitch'), $('avgSwitch'), $('grLightSwitch')].forEach(el => el.addEventListener('keydown', e => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
 }));
 function toggleSwitch(id, setter) {
@@ -1484,6 +1541,7 @@ function revealMainUI() {
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
   setSwitch('avgSwitch', state.autoAvg);
+  setSwitch('grLightSwitch', state.grLight);
   updateAvgInfo();
   renderPosTable();
   renderExclusions();
@@ -1586,7 +1644,7 @@ function historyPrior() {
   list.forEach(e => (e.rows || []).forEach(r => {
     if (r && r.name && +r.week > 0) { tot[r.name] = (tot[r.name] || 0) + (+r.week); wk[r.name] = (wk[r.name] || 0) + 1; }
   }));
-  const light = new Set(state.lightLoad);
+  const light = new Set(effectiveLight());
   const elig = state.model.teachers.filter(t => !isExcluded(t.name, state.exclusions) && (state.includeEAE || !isEAE(t.specialty)));
   let sT = 0, sW = 0;
   elig.forEach(t => { if (wk[t.name] && !light.has(t.name)) { sT += tot[t.name]; sW += wk[t.name]; } });
@@ -1636,7 +1694,7 @@ function runAssignment(dayName, priorCounts, daysUsed) {
   state.assignments[dayName] = assignDay(state.model, dayName, {
     exclusionList: state.exclusions,
     dayExcludedNames: state.dayExclusions[dayName] || [],
-    lightLoadNames: state.lightLoad,
+    lightLoadNames: effectiveLight(),
     combatNames: state.combat,
     maxDays: state.maxDays,
     daysUsed: daysUsed !== undefined ? daysUsed : computeDaysUsed(dayName),
@@ -1786,7 +1844,7 @@ function renderStats() {
     $('statsTableBody').innerHTML = totals.map(([name, weekCount, total]) => {
       const t = state.model.teachers.find(x => x.name === name);
       const pct = Math.round((total / max) * 100);
-      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
+      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : grExtraNames().indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(επιβάρυνση ΓΡ)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
         '<td class="stat-count' + (weekCount === 0 ? ' stat-zero' : '') + '">' + weekCount + '</td>' +
         '<td class="stat-count' + (total === 0 ? ' stat-zero' : '') + '">' + total + '</td>' +
         '<td><div class="stat-bar"><div class="stat-bar-fill" style="width:' + pct + '%"></div></div></td></tr>';
@@ -1797,7 +1855,7 @@ function renderStats() {
     $('statsTableBody').innerHTML = rows.map(([name, count]) => {
       const t = state.model.teachers.find(x => x.name === name);
       const pct = Math.round((count / max) * 100);
-      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
+      return '<tr><td>' + escapeAttr(name) + (state.lightLoad.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(λιγότερες)</span>' : grExtraNames().indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(επιβάρυνση ΓΡ)</span>' : '') + (state.combat.indexOf(name) !== -1 ? ' <span style="font-size:11px;color:var(--ink-muted);">(μάχιμος)</span>' : '') + (state.maxDays[name] != null ? ' <span style="font-size:11px;color:var(--ink-muted);">(έως ' + state.maxDays[name] + ' ημ.)</span>' : '') + '</td><td>' + escapeAttr(t ? t.specialty : '') + '</td>' +
         '<td class="stat-count' + (count === 0 ? ' stat-zero' : '') + '">' + count + '</td>' +
         '<td><div class="stat-bar"><div class="stat-bar-fill" style="width:' + pct + '%"></div></div></td></tr>';
     }).join('');
@@ -2109,10 +2167,13 @@ function renderExclusions() {
   if (!host) return;
   if (!state.model) { host.innerHTML = ''; return; }
   const names = state.model.teachers.map(t => t.name).sort((a, b) => a.localeCompare(b, 'el'));
-  const chips = state.exclusions.map((n, i) =>
-    '<span class="chip" style="display:inline-flex; align-items:center; gap:6px;">' + escapeAttr(n) +
+  const allNames = state.model.teachers.map(t => t.name);
+  const chips = state.exclusions.map((n, i) => {
+    const m = exclusionMatches(n, allNames);
+    const warn = m.length === 0 ? ' — δεν βρέθηκε στο πρόγραμμα' : (m.length > 1 && !m.every(x => exKey(x) === exKey(n))) ? ' — ταιριάζει σε ' + m.length + ' (δεν εφαρμόζεται· γράψε ολόκληρο όνομα)' : '';
+    return '<span class="chip" title="' + escapeAttr(warn ? warn.slice(3) : '') + '" style="display:inline-flex; align-items:center; gap:6px;' + (warn ? ' background:var(--warn-soft); color:var(--warn);' : '') + '">' + escapeAttr(n) + (warn ? ' ⚠' : '') +
     ' <button type="button" class="ex-remove" data-i="' + i + '" aria-label="Αφαίρεση" style="background:none;border:none;cursor:pointer;color:inherit;font-size:15px;line-height:1;padding:0 2px;">×</button></span>'
-  ).join('');
+  ;}).join('');
   const opts = names.filter(n => !isExcluded(n, state.exclusions))
     .map(n => '<option value="' + escapeAttr(n) + '">' + escapeAttr(n) + '</option>').join('');
   host.innerHTML = '<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">' +
@@ -2142,7 +2203,17 @@ function renderSyncBar() {
   const el = $('syncBar');
   if (!el) return;
   let ok = true, txt;
-  if (!syncCfg) { ok = false; txt = '⚠ Χωρίς συγχρονισμό — οι περιορισμοί μένουν μόνο σε αυτή τη συσκευή. Πάτα για ρύθμιση.'; }
+  if (typeof fbUser !== 'undefined' && fbUser) {
+    ok = !fbErr;
+    txt = fbErr ? '⚠ Πρόβλημα συγχρονισμού Google — πάτα για λεπτομέρειες.'
+      : '✓ Συγχρονισμένο μέσω Google' + (fbLast ? ' · ' + new Date(fbLast).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) : '');
+    el.textContent = txt;
+    el.style.borderColor = ok ? 'var(--accent)' : 'var(--warn)';
+    el.style.color = ok ? 'var(--accent-soft-ink)' : 'var(--warn)';
+    try { localStorage.setItem('suite-sync-ef', JSON.stringify({ state: ok ? 'on' : 'err', at: fbLast || 0 })); } catch (e) { /* αγνόησε */ }
+    return;
+  }
+  if (!syncCfg) { ok = false; txt = '⚠ Χωρίς συγχρονισμό — οι περιορισμοί μένουν μόνο σε αυτή τη συσκευή. Πάτα για σύνδεση με Google.'; }
   else if (syncCfg.lastError) { ok = false; txt = '⚠ Πρόβλημα συγχρονισμού — πάτα για λεπτομέρειες.'; }
   else txt = '✓ Συγχρονισμένο με τις άλλες συσκευές' + (syncCfg.lastSync ? ' · ' + new Date(syncCfg.lastSync).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) : '');
   el.textContent = txt;
@@ -2227,6 +2298,23 @@ $('downloadBtn').addEventListener('click', async () => {
   btn.disabled = true;
   setStatus('Δημιουργία εγγράφου…');
   try {
+    const { blob, filename } = await buildWordFile();
+    const msg = await saveGeneratedFile(blob, filename);
+    let hm = '';
+    if (!/ακυρώθηκε/.test(msg)) {
+      try { hm = autoSaveHistory(); } catch (e) { hm = ''; }
+      try { localStorage.setItem('suite-dl-ef', String(Date.now())); } catch (e) { /* αγνόησε */ }
+    }
+    setStatus(msg + (hm ? ' ' + hm : ''));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* Το Word της εβδομάδας ως αρχείο (χρησιμοποιείται και από τη «Λήψη όλων» της αρχικής σελίδας). */
+async function buildWordFile() {
     const days = state.model.days.map(dayName => {
       const times = state.dayTimes[dayName] || defaultTimeFor(dayName);
       const a = state.assignments[dayName];
@@ -2248,18 +2336,14 @@ $('downloadBtn').addEventListener('click', async () => {
       footnote: state.footnote,
     };
     const blob = await buildDocxBytes(model);
-    const safeDate = dateStampForFilename();
-    const filename = 'Εφημερίες_' + safeDate + '.docx';
-    const msg = await saveGeneratedFile(blob, filename);
-    let hm = '';
-    if (!/ακυρώθηκε/.test(msg)) { try { hm = autoSaveHistory(); } catch (e) { hm = ''; } }
-    setStatus(msg + (hm ? ' ' + hm : ''));
-  } catch (err) {
-    setStatus('Σφάλμα: ' + (err.message || String(err)));
-  } finally {
-    btn.disabled = false;
-  }
-});
+    return { blob, filename: 'Εφημερίες_' + dateStampForFilename() + '.docx' };
+}
+window.suiteExport = async function () {
+  if (!state.model || !Object.keys(state.assignments || {}).length) return null;
+  const f = await buildWordFile();
+  try { autoSaveHistory(); localStorage.setItem('suite-dl-ef', String(Date.now())); } catch (e) { /* αγνόησε */ }
+  return f;
+};
 
 /* ---------- ιστορικό στατιστικών (αποθηκεύεται σε αυτό τον browser) + Excel ---------- */
 
@@ -2653,6 +2737,7 @@ function settingsSnapshot() {
     maxDays: state.maxDays,
     combat: state.combat,
     lightLoad: state.lightLoad,
+    grLight: state.grLight,
     dayExclusions: state.dayExclusions,
     positions: state.positions,
     dayTimes: customDayTimes,
@@ -2671,6 +2756,7 @@ function applySettings(d) {
   if (strArr(d.exclusions)) state.exclusions = strArr(d.exclusions);
   if (strArr(d.combat)) state.combat = strArr(d.combat);
   if (strArr(d.lightLoad)) state.lightLoad = strArr(d.lightLoad);
+  if (typeof d.grLight === 'boolean') state.grLight = d.grLight;
   if (d.maxDays && typeof d.maxDays === 'object') {
     state.maxDays = {};
     Object.keys(d.maxDays).forEach(n => { const v = parseInt(d.maxDays[n], 10); if (v >= 1) state.maxDays[n] = v; });
@@ -2702,6 +2788,7 @@ function refreshSettingsUI() {
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
   setSwitch('avgSwitch', state.autoAvg);
+  setSwitch('grLightSwitch', state.grLight);
   updateAvgInfo();
   renderPosTable();
 }
@@ -2815,6 +2902,7 @@ function resetEverything(alsoHistory) {
   setSwitch('eaeSwitch', state.includeEAE);
   setSwitch('dblSwitch', state.avoidDoubleShift);
   setSwitch('avgSwitch', state.autoAvg);
+  setSwitch('grLightSwitch', state.grLight);
   renderPosTable();
   renderHistory();
   setHistoryStatus('');
@@ -3018,11 +3106,12 @@ async function syncNow() {
 }
 
 function markDirty() {
-  if (!syncCfg) return;
+  if (!syncCfg && !fbUser) return;
   syncDirty = true;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(syncNow, 4000);
+  syncTimer = setTimeout(syncAll, 4000);
 }
+async function syncAll() { if (fbUser) await fbSyncNow(); if (syncCfg) await syncNow(); }
 
 function watchChanges(silent) {
   if (settingsFrozen) return;
@@ -3074,6 +3163,90 @@ $('syncDisconnectBtn').addEventListener('click', () => {
   renderSyncUI();
 });
 
+
+/* ---------- συγχρονισμός μέσω Google (Firebase) — ίδιος λογαριασμός και ίδιο έργο με την εφαρμογή ΓΡ ---------- */
+const FB_CFG = { apiKey: 'AIzaSyCAdFnxdD4iFyBGLuSybAyUPOT9B0c4w-Q', authDomain: 'gr-sxoleio.firebaseapp.com', projectId: 'gr-sxoleio',
+  storageBucket: 'gr-sxoleio.firebasestorage.app', messagingSenderId: '388278338092', appId: '1:388278338092:web:4678ddab40e6bbacd00789' };
+var fbUser = null, fbRef = null, fbBusy = false, fbQueued = false, fbErr = '', fbLast = 0, fbUnsub = null, fbLastRemoteAt = 0, fbReady = false, fbArmed = null;
+function renderFb() {
+  const b = $('fbBtn'), s = $('fbStatus');
+  if (b) { b.textContent = fbUser ? (fbArmed ? 'Πάτα ξανά για αποσύνδεση' : 'Αποσύνδεση') : 'Σύνδεση με Google'; b.className = 'btn ' + (fbUser ? 'btn-ghost' : 'btn-primary'); b.disabled = !fbReady; }
+  if (s) s.innerHTML = !fbReady ? 'Έλεγχος σύνδεσης…'
+    : !fbUser ? 'Δεν έχεις συνδεθεί σε αυτή τη συσκευή.'
+    : fbErr ? '<span style="color:var(--warn)">⚠ ' + escHtml(fbErr) + '</span>'
+    : '✓ ' + escHtml(fbUser.email || 'Συνδεδεμένο') + (fbLast ? ' · συγχρονίστηκε ' + new Date(fbLast).toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' }) : '');
+  const bd = $('syncBadge'); if (bd) bd.textContent = fbUser ? (fbErr ? '⚠ πρόβλημα' : '✓ Google') : (syncCfg ? (syncCfg.lastError ? '⚠ πρόβλημα' : '✓ GitHub') : '');
+  renderSyncBar();
+}
+async function fbSyncNow() {
+  if (!fbRef) return;
+  if (fbBusy) { fbQueued = true; return; }
+  fbBusy = true;
+  try {
+    persistSettings(false);
+    watchChanges(true);
+    const db = firebase.firestore();
+    let wrote = 0;
+    await db.runTransaction(async tx => {
+      wrote = 0;
+      const snap = await tx.get(fbRef);
+      let rd = null;
+      if (snap.exists) { try { const d = JSON.parse(snap.data().json); if (d && d.type === SYNC_FILE_TYPE) rd = d; } catch (e) { /* χαλασμένο: θα ξαναγραφτεί */ } }
+      const merged = mergeWithRemote(rd);
+      if (rd && canonBlob(rd) === canonBlob(merged)) { fbLastRemoteAt = snap.data().at || 0; return; }
+      merged.updatedAt = new Date().toISOString();
+      wrote = Date.now();
+      tx.set(fbRef, { json: JSON.stringify(merged), at: wrote });
+    });
+    if (wrote) fbLastRemoteAt = wrote;
+    fbErr = ''; fbLast = Date.now(); syncDirty = false;
+  } catch (e) {
+    fbErr = e && e.code === 'permission-denied'
+      ? 'Ο λογαριασμός Firebase δεν επιτρέπει ακόμα τις Εφημερίες — χρειάζεται ο κανόνας Firestore (μία φορά).'
+      : 'Δεν έγινε συγχρονισμός (χωρίς σύνδεση;) — θα ξαναδοκιμάσει αυτόματα.';
+  } finally {
+    fbBusy = false;
+    renderFb();
+    if (fbQueued) { fbQueued = false; setTimeout(fbSyncNow, 800); }
+  }
+}
+(function initFirebase() {
+  if (!location.protocol.startsWith('http')) { fbReady = true; renderFb(); return; }
+  const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  load(base + 'firebase-app-compat.js')
+    .then(() => Promise.all([load(base + 'firebase-auth-compat.js'), load(base + 'firebase-firestore-compat.js')]))
+    .then(() => {
+      const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FB_CFG);
+      const auth = firebase.auth(), db = firebase.firestore();
+      auth.onAuthStateChanged(u => {
+        fbReady = true; fbUser = u; fbErr = '';
+        if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+        fbRef = u ? db.collection('users').doc(u.uid).collection('efimeries').doc('data') : null;
+        renderFb();
+        if (!u) return;
+        fbSyncNow();
+        fbUnsub = fbRef.onSnapshot(s => {
+          if (s.metadata.hasPendingWrites || !s.exists) return;
+          const at = s.data().at || 0;
+          if (at && at !== fbLastRemoteAt) fbSyncNow();
+        }, () => {});
+      });
+      $('fbBtn').addEventListener('click', async () => {
+        if (!fbUser) {
+          const prov = new firebase.auth.GoogleAuthProvider();
+          try { await auth.signInWithPopup(prov); }
+          catch (e) { if (/popup|operation-not-supported/.test(e.code || '')) auth.signInWithRedirect(prov); else { fbErr = 'Η σύνδεση απέτυχε: ' + (e.message || e.code); renderFb(); } }
+          return;
+        }
+        if (!fbArmed) { fbArmed = setTimeout(() => { fbArmed = null; renderFb(); }, 4000); renderFb(); return; }
+        clearTimeout(fbArmed); fbArmed = null;
+        auth.signOut();   // αποσυνδέει και το ΓΡ σε αυτή τη συσκευή (κοινός λογαριασμός)
+      });
+    })
+    .catch(() => { fbReady = true; fbErr = ''; renderFb(); const s = $('fbStatus'); if (s) s.textContent = 'Δεν φορτώθηκε η σύνδεση Google (χωρίς internet;).'; });
+})();
+
 /* ---------- εκκίνηση: επαναφορά τοπικών δεδομένων ---------- */
 
 try { settingsAt = Number(localStorage.getItem(SETTINGS_AT_KEY)) || 0; } catch (e) { settingsAt = 0; }
@@ -3102,6 +3275,8 @@ $('dataCard').parentNode.insertBefore($('dataCard'), $('actionbar'));
 $('syncBar').addEventListener('click', () => { $('dataSec').open = true; $('syncSec').open = true; $('syncSec').scrollIntoView({ behavior: 'smooth', block: 'center' }); });
 $('syncBar').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('syncBar').click(); } });
 renderSyncUI();
+if (syncCfg) $('ghBox').open = true;
+renderFb();
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { /* αγνόησε */ }
 if (!storedSettings) {
   const startJson = settingsLastJson;
