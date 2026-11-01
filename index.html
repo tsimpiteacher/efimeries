@@ -2293,6 +2293,7 @@ async function saveWithPicker(blob, filename, pickerType) {
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: filename,
+      id: 'suite-save',   // ίδιος φάκελος με τις άλλες εφαρμογές της σουίτας
       types: [pickerType || {
         description: 'Έγγραφο Word',
         accept: { 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] },
