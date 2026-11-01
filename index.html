@@ -14,7 +14,7 @@
 <title>Πίνακας Εφημεριών</title>
 </head>
 <body>
-<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Εφημερίες ⇄ ΓΡ ⇄ Αναπληρώσεις ⇄ Συμπύκνωση (ίδιο κομμάτι σε όλες τις εφαρμογές) ===== -->
+<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Συμπύκνωση ⇄ Εφημερίες ⇄ ΓΡ ⇄ Αναπληρώσεις (ίδιο κομμάτι σε όλες τις εφαρμογές) ===== -->
 <nav class="sbar" id="suiteBar" data-app="ef" aria-label="Εφαρμογές">
   <a class="sbar-home" href="../" title="Όλες οι εφαρμογές">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
@@ -27,21 +27,21 @@
   </button>
   <button type="button" class="sbar-theme" id="sbarTheme" aria-label="Θέμα"></button>
   <div class="sbar-seg" role="group" aria-label="Εναλλαγή εφαρμογής">
-    <a class="sbar-opt ef" href="../efimeries/" data-to="ef">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 3v3.5M16 3v3.5"/></svg>
-      <span class="l">Εφημερίες</span><span class="s">Εφημ.</span>
-    </a>
-    <a class="sbar-opt gr" href="../gr/" data-to="gr">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M9 9v11.5M15 9v11.5"/></svg>
-      <span>ΓΡ</span>
-    </a>
-    <a class="sbar-opt an" href="../anaplirwseis/" data-to="an">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M16 7.5h5M18.5 5v5"/></svg>
-      <span class="l">Αναπληρώσεις</span><span class="s">Αναπλ.</span>
-    </a>
     <a class="sbar-opt sy" href="../sympyknosi/" data-to="sy">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="17" rx="2.5"/><path d="M2.5 9.2h13M2.5 14.8h13M9 3.5v17"/><path d="M20 20.5V6.5M17 9.5l3-3 3 3"/></svg>
       <span class="l">Συμπύκνωση</span><span class="s">Συμπ.</span>
+    </a>
+<a class="sbar-opt ef" href="../efimeries/" data-to="ef">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 3v3.5M16 3v3.5"/></svg>
+      <span class="l">Εφημερίες</span><span class="s">Εφημ.</span>
+    </a>
+<a class="sbar-opt gr" href="../gr/" data-to="gr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M9 9v11.5M15 9v11.5"/></svg>
+      <span>ΓΡ</span>
+    </a>
+<a class="sbar-opt an" href="../anaplirwseis/" data-to="an">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M16 7.5h5M18.5 5v5"/></svg>
+      <span class="l">Αναπληρώσεις</span><span class="s">Αναπλ.</span>
     </a>
   </div>
   </div>
@@ -245,6 +245,11 @@
   .tt-offer{margin-top:14px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
     background:var(--accent2-soft); color:var(--accent2-soft-ink); font-size:13.5px;}
   .tt-offer[hidden]{display:none;}
+  .sy-info{margin-top:12px; padding:10px 12px; border-radius:10px; font-size:13.5px; background:#DDF1EE; color:#0B4F47; border:1px solid #9FD6CE;}
+  .sy-info[hidden]{display:none;}
+  .sy-info a{color:inherit; font-weight:700;}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .sy-info{background:#173C38; color:#BFEDE6; border-color:#2B5F58;} }
+  :root[data-theme="dark"] .sy-info{background:#173C38; color:#BFEDE6; border-color:#2B5F58;}
   .tt-offer b{font-weight:700;}
   .tt-offer .tt-btns{display:flex; gap:8px; margin-left:auto;}
   .tt-offer .btn{padding:7px 12px; font-size:13px;}
@@ -430,6 +435,7 @@
     <div class="tt-offer" id="ttOffer" hidden></div>
     <input type="file" id="fileInput" accept=".xlsx,.xls">
     <div class="parse-status" id="parseStatus"></div>
+    <div class="sy-info" id="syInfo" hidden></div>
   </div>
 
   <div class="card" id="dataCard">
@@ -648,6 +654,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
       Λήψη Word
     </button>
+    <a class="btn btn-ghost" id="toGrBtn" style="text-decoration:none" href="../gr/?from=ef" title="Βήμα 3: κατανομή ΓΡ με το ίδιο πρόγραμμα και τις εφημερίες αυτής της εβδομάδας">Συνέχεια στο ΓΡ →</a>
   </div>
 
   <footer class="note">Η επεξεργασία του προγράμματος γίνεται τοπικά στον browser — τα ονόματα δεν αποστέλλονται πουθενά.</footer>
@@ -1212,6 +1219,7 @@ const state = {
   footnote: DEFAULT_FOOTNOTE,
   priorCounts: null,     // Map(name -> count) imported from a previous week's exported stats, or null
   priorMeta: null,       // { dateLabel, generatedAt, teacherCount } about the imported file, for display only
+  syInfo: null,          // αν το πρόγραμμα ήρθε συμπυκνωμένο από τη Συμπύκνωση: { dayNames, absent:{ημέρα:[ονόματα]}, moved, holes }
 };
 
 const $ = (id) => document.getElementById(id);
@@ -1590,6 +1598,7 @@ function buildSessionPayload() {
     footnote: state.footnote,
     priorCounts: state.priorCounts ? Object.fromEntries(state.priorCounts) : null,
     priorMeta: state.priorMeta || null,
+    syInfo: state.syInfo || null,
   };
 }
 
@@ -1613,6 +1622,8 @@ function applySessionPayload(data) {
   state.footnote = typeof data.footnote === 'string' ? data.footnote : DEFAULT_FOOTNOTE;
   state.priorCounts = null;
   state.priorMeta = null;
+  state.syInfo = data.syInfo && Array.isArray(data.syInfo.dayNames) ? data.syInfo : null;
+  renderSyInfo();
 
   $('dzMain').textContent = 'Πρόγραμμα από αποθηκευμένη επεξεργασία';
   $('dzSub').textContent = 'Μπορείς να ανεβάσεις κι άλλο αρχείο .xlsx όποτε θες';
@@ -2048,6 +2059,8 @@ function handleFile(file, shared) {
       const wb = XLSX.read(data, { type: 'array' });
       const model = parseWorkbook(XLSX, wb);
       if (shared) ttMarkUsed(shared.at); else ttShare(data, file.name);
+      state.syInfo = shared && shared.from === 'sy' && shared.sy && Array.isArray(shared.sy.dayNames) && shared.sy.dayNames.length
+        ? { dayNames: shared.sy.dayNames, absent: shared.sy.absent || {}, moved: shared.sy.moved || 0, holes: shared.sy.holes || 0 } : null;
       state.model = model;
       state.school = model.school || state.school;
       state.dateLabel = model.dateLabel || state.dateLabel;
@@ -2065,6 +2078,7 @@ function handleFile(file, shared) {
         '<div class="ok">✓ Βρέθηκαν ' + model.teachers.length + ' εκπαιδευτικοί και ' + model.days.length + ' ημέρες.</div>' +
         '<div class="chips">' + model.days.map(d => '<span class="chip">' + d + '</span>').join('') + '</div>';
 
+      renderSyInfo();
       revealMainUI();
       setStatus('Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.');
     } catch (err) {
@@ -2100,24 +2114,41 @@ function ttWhen(t) {
   const day = d.toDateString() === today.toDateString() ? 'σήμερα' : d.toDateString() === y.toDateString() ? 'χθες' : p(d.getDate()) + '/' + p(d.getMonth() + 1);
   return day + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
+const TT_FROM = { sy: 'τη Συμπύκνωση', gr: 'την εφαρμογή ΓΡ', an: 'τις Αναπληρώσεις' };
+const escT = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Ήρθαμε από το κουμπί «Συνέχεια στις Εφημερίες» της Συμπύκνωσης: το πρόγραμμα φορτώνεται χωρίς ερώτηση.
+let ttAuto = /[?&]from=sy\b/.test(location.search);
+if (ttAuto) try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* αγνόησε */ }
+function ttUseShared(t) {
+  const bin = atob(t.file), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  handleFile(new File([u8], t.fname || 'Πρόγραμμα.xlsx'), t);
+}
 function renderTT() {
   const el = $('ttOffer');
   if (!el) return;
   const t = ttRead();
   const show = !!t && t.from !== 'ef' && (t.at > ttUsed() || !state.model);
+  const auto = ttAuto; ttAuto = false;
+  if (show && auto && t.from === 'sy') { el.hidden = true; el.innerHTML = ''; ttUseShared(t); return; }
   el.hidden = !show;
   if (!show) { el.innerHTML = ''; return; }
-  el.innerHTML = '<span>Πρόγραμμα από την εφαρμογή ΓΡ: <b>' + escapeAttr(t.fname || 'χωρίς όνομα') + '</b> · ' + ttWhen(t.at) + '</span>' +
+  const sy = t.from === 'sy' && t.sy && t.sy.dayNames && t.sy.dayNames.length ? ' (συμπυκνωμένο: ' + t.sy.dayNames.map(escT).join(', ') + ')' : '';
+  el.innerHTML = '<span>' + (t.from === 'sy' ? 'Νέο πρόγραμμα' : 'Πρόγραμμα') + ' από ' + (TT_FROM[t.from] || 'άλλη εφαρμογή') + ': <b>' + escT(t.fname || 'χωρίς όνομα') + '</b>' + sy + ' · ' + ttWhen(t.at) + '</span>' +
     '<span class="tt-btns"><button type="button" class="btn btn-primary" id="ttUse">Χρήση εδώ</button>' +
     (state.model ? '<button type="button" class="btn btn-ghost" id="ttNo">Όχι</button>' : '') + '</span>';
-  $('ttUse').addEventListener('click', () => {
-    const bin = atob(t.file), u8 = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-    handleFile(new File([u8], t.fname || 'Πρόγραμμα.xlsx'), t);
-    el.hidden = true;
-  });
+  $('ttUse').addEventListener('click', () => { ttUseShared(t); el.hidden = true; });
   const no = $('ttNo');
   if (no) no.addEventListener('click', () => { ttMarkUsed(t.at); renderTT(); });
+}
+function renderSyInfo() {
+  const el = $('syInfo'); if (!el) return;
+  const s = state.syInfo;
+  el.hidden = !s;
+  if (!s) { el.innerHTML = ''; return; }
+  const abs = s.dayNames.map(d => '<b>' + escT(d) + '</b>' + ((s.absent && s.absent[d] || []).length ? ': λείπουν ' + s.absent[d].map(escT).join(', ') : '')).join(' · ');
+  el.innerHTML = '✓ Πρόγραμμα με <b>συμπύκνωση</b> · ' + abs + '. Οι απόντες δεν μπαίνουν σε εφημερία εκείνη τη μέρα και η 1η/6η ώρα μετράει μετά τις μετακινήσεις' +
+    (s.moved ? ' (' + s.moved + ' ' + (s.moved === 1 ? 'μετακίνηση' : 'μετακινήσεις') + ')' : '') + '. <a href="../sympyknosi/">Αλλαγή στη Συμπύκνωση</a>';
 }
 window.addEventListener('storage', e => { if (e.key === TT_KEY) renderTT(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) renderTT(); });
@@ -2874,6 +2905,7 @@ function clearWorkingState() {
   $('dzMain').textContent = INITIAL_DZ_MAIN;
   $('dzSub').textContent = INITIAL_DZ_SUB;
   $('parseStatus').innerHTML = '';
+  state.syInfo = null; renderSyInfo();
   $('historyView').innerHTML = '';
   ['fileInput'].forEach(id => { const i = $(id); if (i) i.value = ''; });
   $('dateInput').value = '';
