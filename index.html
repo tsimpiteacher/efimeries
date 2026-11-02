@@ -566,8 +566,8 @@
     <p class="sub">Οι κανόνες: 1η βάρδια = μη κενό κελί στην 1η ώρα εκείνης της ημέρας· 2η βάρδια = μη κενό κελί στην 6η ώρα. Προσαρμόζεις ό,τι χρειάζεται πριν την τοποθέτηση.</p>
 
     <div class="grid2">
-      <label class="field"><span class="lbl">Σχολείο</span><input type="text" id="schoolInput"></label>
-      <label class="field"><span class="lbl">Περίοδος (εμφανίζεται ως «από …»)</span><input type="text" id="dateInput"></label>
+      <label class="field"><span class="lbl">Σχολείο</span><input type="text" id="schoolInput" autocomplete="off"></label>
+      <label class="field"><span class="lbl">Περίοδος (εμφανίζεται ως «από …»)</span><input type="text" id="dateInput" autocomplete="off"></label>
     </div>
 
     <div id="leaveBox" style="margin-top:16px;"></div>
@@ -1522,7 +1522,7 @@ function renderPosTable() {
   state.positions.forEach((p, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML =
-      '<td><input type="text" data-idx="' + i + '" class="pos-label-in" value="' + escapeAttr(p.label) + '"></td>' +
+      '<td><input type="text" autocomplete="off" data-idx="' + i + '" class="pos-label-in" value="' + escapeAttr(p.label) + '"></td>' +
       '<td><input type="number" min="0" max="9" data-idx="' + i + '" class="pos-a-in" value="' + p.countA + '"></td>' +
       '<td><input type="number" min="0" max="9" data-idx="' + i + '" class="pos-b-in" value="' + p.countB + '"></td>';
     body.appendChild(tr);
@@ -2069,12 +2069,12 @@ function renderShiftCol(dayName, shift, time, a) {
   const needed = shift === 'A' ? a.countA : a.countB;
 
   let html = '<div class="shift-head"><span class="shift-dot ' + (shift === 'A' ? 'a' : 'b') + '"></span><b>' + (shift === 'A' ? 'Α΄ βάρδια' : 'Β΄ βάρδια') + '</b>' +
-    '<input class="time" type="text" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" value="' + escapeAttr(time) + '"></div>';
+    '<input class="time" type="text" autocomplete="off" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" value="' + escapeAttr(time) + '"></div>';
 
   state.positions.forEach((p, i) => {
     const val = (slots[i] || []).join(' – ');
     html += '<div class="pos-row"><div class="pos-label">' + escapeAttr(p.label) + '</div>' +
-      '<div class="pos-field"><div class="pos-in"><input type="text" list="' + listId + '" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '" value="' + escapeAttr(val) + '"><div class="pos-view" aria-hidden="true"></div></div>' +
+      '<div class="pos-field"><div class="pos-in"><input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" list="' + listId + '" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '" value="' + escapeAttr(val) + '"><div class="pos-view" aria-hidden="true"></div></div>' +
       '<select class="gap-add" hidden title="Συμπλήρωση κενής θέσης" aria-label="Συμπλήρωση κενής θέσης" data-day="' + escapeAttr(dayName) + '" data-shift="' + shift + '" data-pos="' + i + '"></select></div></div>';
   });
 
