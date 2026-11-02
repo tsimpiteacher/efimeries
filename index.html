@@ -544,7 +544,7 @@
       <div class="switch on" id="dblSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
       <div class="switch-copy"><b>Αποφυγή διπλής εφημερίας ίδιας ημέρας</b><span>Όποιος τοποθετηθεί στην Α΄ βάρδια μιας ημέρας, δεν προτείνεται ξανά αυτόματα για τη Β΄ βάρδια της ίδιας ημέρας.</span></div>
     </div>
-    <div class="switch-row">
+    <div class="switch-row" style="display:none;">
       <div class="switch on" id="avgSwitch" role="switch" aria-checked="true" tabindex="0"><div class="knob"></div></div>
       <div class="switch-copy"><b>Κοινός μέσος όρος εφημεριών ανά εβδομάδα</b><span>Η κατανομή προσπαθεί, εβδομάδα με την εβδομάδα, να φέρει όλους (εκτός των εξαιρέσεων) στον ίδιο μέσο όρο: όποιος έχει κάνει λιγότερες από τον μέσο όρο στις προηγούμενες εβδομάδες του ιστορικού, προηγείται. <span id="avgInfo"></span></span></div>
     </div>
@@ -924,7 +924,7 @@ function assignDay(model, dayName, opts) {
     return null;
   }
 
-  function buildShift(roomKey, needGround, need2, need3, needExtra, excludeUsed) {
+  function buildShift(roomKey, needGround, need2, need3, needExtra, excludeUsed, forced) {
     // Βήματα 1+2: όποιος έχει μάθημα εκείνη την ώρα (όποια κι αν είναι η
     // αίθουσα), εκτός από όποιον έκανε ήδη εφημερία στην άλλη βάρδια σήμερα.
     const roomByName = new Map();
@@ -952,6 +952,7 @@ function assignDay(model, dayName, opts) {
     };
     // Όριο ημερών ανά εκπαιδευτικό: πρώτα όσοι δεν το έχουν συμπληρώσει· μόνο αν
     // δεν επαρκούν για τις θέσεις, συμπληρώνονται (με τη σειρά φόρτου) και οι υπόλοιποι.
+    if (forced) forced.forEach(n => { if (roomByName.has(n)) tryTake(n); });
     orderedNames.filter(n => !overDayCap(n)).forEach(tryTake);
     orderedNames.filter(overDayCap).forEach(tryTake);
     selected.forEach(bump);
@@ -995,8 +996,8 @@ function assignDay(model, dayName, opts) {
     };
   }
 
-  const A = buildShift('p1Room', posGround.countA, pos2.countA, pos3.countA, posExtra.countA, null);
-  const B = buildShift('p6Room', posGround.countB, pos2.countB, pos3.countB, posExtra.countB, avoidDoubleShift ? A.usedNames : null);
+  const A = buildShift('p1Room', posGround.countA, pos2.countA, pos3.countA, posExtra.countA, null, opts.forcedA);
+  const B = buildShift('p6Room', posGround.countB, pos2.countB, pos3.countB, posExtra.countB, avoidDoubleShift ? A.usedNames : null, opts.forcedB);
 
   return {
     poolA: A.pool, poolB: B.pool,
@@ -1196,7 +1197,7 @@ const DEFAULT_FOOTNOTE =
   '**Οι εφημερεύοντες κατά το σχόλασμα φροντίζουν για τη συγκέντρωση και αρχειοθέτηση των απουσιολογίων και βιβλίων ύλης, τα οποία οι εκπαιδευτικοί της τελευταίας διδακτικής ώρας κάθε τμήματος φέρνουν στο γραφείο.';
 
 const state = {
-  autoAvg: true,         // κοινός μέσος όρος εβδομάδων από το ιστορικό
+  autoAvg: false,        // ο κανόνας «κοινός μέσος όρος εβδομάδων από το ιστορικό» αφαιρέθηκε
   model: null,          // parsed workbook model
   school: '',
   dateLabel: '',
@@ -1208,6 +1209,7 @@ const state = {
   lightLoad: [],         // teacher names who should get fewer duties if possible
   grLight: true,         // όσοι έχουν επιβάρυνση ΓΡ (2+) μετράνε σαν «λιγότερες εφημερίες»
   dayExclusions: {},     // dayName -> [teacher names excluded just for that day]
+  dayExclusionsWeek: '', // περίοδος (εβδομάδα) στην οποία αφορούν οι άδειες — με νέο πρόγραμμα μηδενίζονται
   positions: [
     { label: 'ΙΣΟΓΕΙΟ - ΜΠΑΣΚΕΤ (Α)', countA: 3, countB: 3 },
     { label: '2ΟΣ ΟΡΟΦΟΣ*', countA: 3, countB: 3 },
@@ -1391,6 +1393,7 @@ function renderLeaveBox() {
 }
 
 function addLeave(name, daysPicked) {
+  state.dayExclusionsWeek = (state.model && state.model.dateLabel) || state.dateLabel || '';
   let reshuffled = 0;
   daysPicked.forEach(day => {
     const list = state.dayExclusions[day] || (state.dayExclusions[day] = []);
@@ -1446,6 +1449,7 @@ function renderDayExclusions() {
 }
 
 function addDayExclusion(day, name) {
+  state.dayExclusionsWeek = (state.model && state.model.dateLabel) || state.dateLabel || '';
   const list = state.dayExclusions[day] || (state.dayExclusions[day] = []);
   if (list.indexOf(name) === -1) list.push(name);
   const a = state.assignments[day];
@@ -1589,6 +1593,7 @@ function buildSessionPayload() {
     avoidDoubleShift: state.avoidDoubleShift,
     exclusions: state.exclusions,
     dayExclusions: state.dayExclusions,
+    dayExclusionsWeek: state.dayExclusionsWeek || '',
     lightLoad: state.lightLoad,
     combat: state.combat,
     maxDays: state.maxDays,
@@ -1616,6 +1621,7 @@ function applySessionPayload(data) {
   state.combat = Array.isArray(data.combat) ? data.combat : [];
   state.maxDays = (data.maxDays && typeof data.maxDays === 'object') ? data.maxDays : {};
   state.dayExclusions = (data.dayExclusions && typeof data.dayExclusions === 'object') ? data.dayExclusions : {};
+  state.dayExclusionsWeek = typeof data.dayExclusionsWeek === 'string' ? data.dayExclusionsWeek : '';
   state.positions = Array.isArray(data.positions) && data.positions.length ? data.positions : state.positions;
   state.dayTimes = data.dayTimes || {};
   state.assignments = data.assignments || {};
@@ -1706,7 +1712,7 @@ function computeDaysUsed(excludeDay) {
   return used;
 }
 
-function runAssignment(dayName, priorCounts, daysUsed) {
+function runAssignment(dayName, priorCounts, daysUsed, forced) {
   const wasAuto = assignmentsAreAuto();
   state.assignments[dayName] = assignDay(state.model, dayName, {
     exclusionList: state.exclusions,
@@ -1718,6 +1724,8 @@ function runAssignment(dayName, priorCounts, daysUsed) {
     includeEAE: state.includeEAE,
     avoidDoubleShift: state.avoidDoubleShift,
     positions: state.positions,
+    forcedA: forced ? forced.A : null,
+    forcedB: forced ? forced.B : null,
     priorCounts: priorCounts !== undefined ? priorCounts : computeWeekCounts(dayName),
   });
   if (wasAuto) markAutoClean();
@@ -1739,7 +1747,95 @@ function runAssignmentsForAllDays() {
     all.forEach(n => counts.set(n, (counts.get(n) || 0) + 1));
     new Set(all).forEach(n => daysUsed.set(n, (daysUsed.get(n) || 0) + 1));
   });
+  try { balanceWeek(); } catch (e) { /* αν αποτύχει η εξισορρόπηση, μένει η αρχική κατανομή */ }
   markAutoClean();
+}
+
+/* ---------- εξισορρόπηση εβδομάδας ----------
+   Μετά την πρώτη κατανομή, αλλάζει εκπαιδευτικούς μέσα στις ίδιες βάρδιες (πάντα σε όσους έχουν μάθημα εκείνη
+   την ώρα και δεν είναι εξαιρεμένοι) ώστε όλοι να καταλήξουν με όσο γίνεται ίδιο αριθμό εφημεριών — π.χ. 4 ο καθένας
+   όταν οι θέσεις της εβδομάδας είναι περίπου 4 × αριθμός εκπαιδευτικών. Δεν χρησιμοποιεί το ιστορικό προηγούμενων εβδομάδων. */
+function eligibleNamesFor(dayName, roomKey) {
+  const off = new Set(state.dayExclusions[dayName] || []);
+  return state.model.teachers
+    .filter(t => !isExcluded(t.name, state.exclusions) && !off.has(t.name) && (state.includeEAE || !isEAE(t.specialty)) && t.days[dayName] && t.days[dayName][roomKey])
+    .map(t => t.name);
+}
+
+function balanceWeek() {
+  const days = state.model.days;
+  const sel = {}, elig = {};
+  days.forEach(d => {
+    const a = state.assignments[d];
+    if (!a) return;
+    sel[d] = { A: a.slotsA.flat().slice(), B: a.slotsB.flat().slice() };
+    elig[d] = { A: new Set(eligibleNamesFor(d, 'p1Room')), B: new Set(eligibleNamesFor(d, 'p6Room')) };
+  });
+  const dnames = days.filter(d => sel[d]);
+  const lightSet = new Set(state.lightLoad), combat = new Set(state.combat);
+  const w = n => (lightSet.has(n) ? LIGHT_LOAD_WEIGHT : 1);
+  const pos = state.positions;
+  const cap = { A: ((pos[0] || {}).countA || 0) + ((pos[2] || {}).countA || 0), B: ((pos[0] || {}).countB || 0) + ((pos[2] || {}).countB || 0) };
+  const cnt = new Map(), daysOn = new Map();
+  const dayMap = n => { let m = daysOn.get(n); if (!m) { m = new Map(); daysOn.set(n, m); } return m; };
+  const add = (n, d) => { cnt.set(n, (cnt.get(n) || 0) + 1); const m = dayMap(n); m.set(d, (m.get(d) || 0) + 1); };
+  const del = (n, d) => { cnt.set(n, (cnt.get(n) || 0) - 1); const m = dayMap(n); const v = (m.get(d) || 0) - 1; if (v > 0) m.set(d, v); else m.delete(d); };
+  const load = n => (cnt.get(n) || 0) / w(n);
+  const loadAfter = n => ((cnt.get(n) || 0) + 1) / w(n);
+  dnames.forEach(d => ['A', 'B'].forEach(k => sel[d][k].forEach(n => add(n, d))));
+
+  function canSwap(d, k, x, y) {
+    const S = sel[d][k];
+    if (S.indexOf(x) < 0 || S.indexOf(y) >= 0 || !elig[d][k].has(y)) return false;
+    if (state.avoidDoubleShift && sel[d][k === 'A' ? 'B' : 'A'].indexOf(y) >= 0) return false;
+    const mx = state.maxDays[y];
+    if (mx != null && !dayMap(y).has(d) && dayMap(y).size >= mx) return false;
+    if (combat.has(y) && !combat.has(x) && S.filter(n => combat.has(n)).length + 1 > cap[k]) return false;
+    return true;
+  }
+  function doSwap(d, k, x, y) { const S = sel[d][k]; S[S.indexOf(x)] = y; del(x, d); add(y, d); }
+  function moves(x) {
+    const out = [];
+    dnames.forEach(d => ['A', 'B'].forEach(k => {
+      if (sel[d][k].indexOf(x) < 0) return;
+      elig[d][k].forEach(y => { if (canSwap(d, k, x, y)) out.push({ d, k, x, y }); });
+    }));
+    return out;
+  }
+  function improve() {
+    const srcs = Array.from(cnt.keys()).filter(n => (cnt.get(n) || 0) > 0).sort((a, b) => load(b) - load(a));
+    for (const a of srcs) {
+      const prev = new Map([[a, null]]), depth = new Map([[a, 0]]);
+      const queue = [a];
+      let found = null;
+      while (queue.length && !found) {
+        const x = queue.shift();
+        if (depth.get(x) >= 4) continue;
+        for (const mv of moves(x)) {
+          if (prev.has(mv.y)) continue;
+          prev.set(mv.y, mv); depth.set(mv.y, depth.get(x) + 1);
+          if (loadAfter(mv.y) < load(a) - 1e-9) { found = mv.y; break; }
+          queue.push(mv.y);
+        }
+      }
+      if (!found) continue;
+      const path = [];
+      for (let y = found; prev.get(y); y = prev.get(y).x) path.unshift(prev.get(y));
+      const done = [];
+      let ok = true;
+      for (const mv of path) {
+        if (!canSwap(mv.d, mv.k, mv.x, mv.y)) { ok = false; break; }
+        doSwap(mv.d, mv.k, mv.x, mv.y); done.push(mv);
+      }
+      if (ok) return true;
+      done.reverse().forEach(mv => doSwap(mv.d, mv.k, mv.y, mv.x));
+    }
+    return false;
+  }
+  let guard = 0;
+  while (guard++ < 600 && improve()) { /* συνεχίζει όσο μειώνεται η ανισότητα */ }
+  if (guard <= 1) return;
+  dnames.forEach(d => runAssignment(d, undefined, undefined, { A: sel[d].A, B: sel[d].B }));
 }
 
 /* ---------- statistics & error checking ---------- */
@@ -1844,6 +1940,14 @@ function renderStats() {
       (warns.length ? '<div class="warnbox">⚠ ' + warns.length + ' ' + (warns.length === 1 ? 'προειδοποίηση' : 'προειδοποιήσεις') + '</div>' : '');
   }
 
+  {
+    const el = state.model.teachers.filter(t => !isExcluded(t.name, state.exclusions) && (state.includeEAE || !isEAE(t.specialty)) && state.lightLoad.indexOf(t.name) === -1);
+    if (el.length) {
+      const vals = el.map(t => counts.get(t.name) || 0);
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      summary.insertAdjacentHTML('beforeend', '<div style="font-size:13px; color:var(--ink-muted); margin-top:6px;">Εφημερίες ανά εκπαιδευτικό: από ' + Math.min.apply(null, vals) + ' έως ' + Math.max.apply(null, vals) + ' (μέσος όρος ' + (Math.round(avg * 10) / 10).toString().replace('.', ',') + ').</div>');
+    }
+  }
   $('statsIssues').innerHTML = issues
     .sort((x, y) => (x.level === y.level ? 0 : x.level === 'error' ? -1 : 1))
     .map(i => '<div class="issue-row ' + i.level + '">' + (i.level === 'error' ? '✗ ' : '⚠ ') + escapeAttr(i.text) + '</div>').join('');
@@ -2058,6 +2162,13 @@ function handleFile(file, shared) {
       const data = new Uint8Array(reader.result);
       const wb = XLSX.read(data, { type: 'array' });
       const model = parseWorkbook(XLSX, wb);
+      /* Νέο πρόγραμμα = νέα εβδομάδα: οι άδειες / απουσίες της προηγούμενης μηδενίζονται (εκτός αν ανεβάζεις ξανά την ίδια εβδομάδα). */
+      let clearedLeaves = 0;
+      if (Object.keys(state.dayExclusions).length && !(model.dateLabel && model.dateLabel === state.dayExclusionsWeek)) {
+        clearedLeaves = Object.keys(state.dayExclusions).reduce((a, k) => a + (state.dayExclusions[k] || []).length, 0);
+        state.dayExclusions = {};
+        state.dayExclusionsWeek = '';
+      }
       if (shared) ttMarkUsed(shared.at); else ttShare(data, file.name);
       state.syInfo = shared && shared.from === 'sy' && shared.sy && Array.isArray(shared.sy.dayNames) && shared.sy.dayNames.length
         ? { dayNames: shared.sy.dayNames, absent: shared.sy.absent || {}, moved: shared.sy.moved || 0, holes: shared.sy.holes || 0 } : null;
@@ -2069,8 +2180,8 @@ function handleFile(file, shared) {
       state.dayTimes = {};
       model.days.forEach(d => { state.dayTimes[d] = Object.assign(defaultTimeFor(d), customDayTimes[d] || {}); });
       state.assignments = {};
-      // Οι περιορισμοί (μάχιμοι, λιγότερες εφημερίες, όρια ημερών, εξαιρέσεις ημέρας) ΜΕΝΟΥΝ
-      // ίδιοι μέχρι να τους αλλάξει ο χρήστης — δεν καθαρίζονται σε νέο πρόγραμμα.
+      // Οι πάγιοι περιορισμοί (μάχιμοι, λιγότερες εφημερίες, όρια ημερών, μόνιμες εξαιρέσεις) ΜΕΝΟΥΝ
+      // ίδιοι μέχρι να τους αλλάξει ο χρήστης· μηδενίζονται μόνο οι άδειες / εξαιρέσεις ημέρας (παραπάνω).
       runAssignmentsForAllDays();
 
       $('dzSub').textContent = 'Επιτυχής ανάλυση — μπορείς να ανεβάσεις άλλο αρχείο όποτε θες';
@@ -2080,7 +2191,7 @@ function handleFile(file, shared) {
 
       renderSyInfo();
       revealMainUI();
-      setStatus('Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.');
+      setStatus('Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.' + (clearedLeaves ? ' Οι άδειες της προηγούμενης εβδομάδας (' + clearedLeaves + ') μηδενίστηκαν.' : ''));
     } catch (err) {
       $('dzSub').textContent = 'Ανέβασε αρχείο προγράμματος (.xlsx)';
       $('parseStatus').innerHTML = '<div class="err">✗ ' + escapeAttr(err.message || String(err)) + '</div>';
@@ -2777,6 +2888,7 @@ function settingsSnapshot() {
     lightLoad: state.lightLoad,
     grLight: state.grLight,
     dayExclusions: state.dayExclusions,
+    dayExclusionsWeek: state.dayExclusionsWeek || '',
     positions: state.positions,
     dayTimes: customDayTimes,
     footnote: state.footnote,
@@ -2790,7 +2902,7 @@ function applySettings(d) {
   if (typeof d.school === 'string') state.school = d.school;
   if (typeof d.includeEAE === 'boolean') state.includeEAE = d.includeEAE;
   if (typeof d.avoidDoubleShift === 'boolean') state.avoidDoubleShift = d.avoidDoubleShift;
-  if (typeof d.autoAvg === 'boolean') state.autoAvg = d.autoAvg;
+  state.autoAvg = false; // ο κανόνας ιστορικού (μέσος όρος εβδομάδων) έχει αφαιρεθεί
   if (strArr(d.exclusions)) state.exclusions = strArr(d.exclusions);
   if (strArr(d.combat)) state.combat = strArr(d.combat);
   if (strArr(d.lightLoad)) state.lightLoad = strArr(d.lightLoad);
@@ -2799,6 +2911,7 @@ function applySettings(d) {
     state.maxDays = {};
     Object.keys(d.maxDays).forEach(n => { const v = parseInt(d.maxDays[n], 10); if (v >= 1) state.maxDays[n] = v; });
   }
+  if (typeof d.dayExclusionsWeek === 'string') state.dayExclusionsWeek = d.dayExclusionsWeek;
   if (d.dayExclusions && typeof d.dayExclusions === 'object') {
     state.dayExclusions = {};
     Object.keys(d.dayExclusions).forEach(day => { const a = strArr(d.dayExclusions[day]); if (a && a.length) state.dayExclusions[day] = a; });
@@ -2924,12 +3037,13 @@ function resetEverything(alsoHistory) {
   state.school = '';
   state.includeEAE = false;
   state.avoidDoubleShift = true;
-  state.autoAvg = true;
+  state.autoAvg = false;
   state.exclusions = DEFAULT_EXCLUSIONS.slice();
   state.maxDays = {};
   state.combat = [];
   state.lightLoad = [];
   state.dayExclusions = {};
+  state.dayExclusionsWeek = '';
   state.positions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
   state.footnote = DEFAULT_FOOTNOTE;
   state.priorCounts = null;
