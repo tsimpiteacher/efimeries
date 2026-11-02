@@ -2254,8 +2254,20 @@ function ttMarkUsed(at) { try { localStorage.setItem(TT_USED, String(at)); } cat
 function ttB64(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function ttShare(u8, name) {
   const at = Date.now();
-  try { localStorage.setItem(TT_KEY, JSON.stringify({ fname: name, at: at, from: 'ef', file: ttB64(u8) })); } catch (e) { /* γεμάτος χώρος: απλώς δεν μοιράζεται */ }
+  const t = { fname: name, at: at, from: 'ef', file: ttB64(u8) };
+  try { localStorage.setItem(TT_KEY, JSON.stringify(t)); } catch (e) { /* γεμάτος χώρος: απλώς δεν μοιράζεται */ }
   ttMarkUsed(at);
+  renderTT();
+  ttCloudPush(t);
+}
+/* Το κοινό πρόγραμμα ανεβαίνει και στο cloud (ίδιο με το ΓΡ), ώστε να το βρίσκουν όλοι οι υπολογιστές. */
+var ttCloudRef = null, ttCloudUnsub = null;
+function ttCloudPush(t) { if (ttCloudRef && t && t.file) ttCloudRef.set({ fname: t.fname || '', at: t.at || Date.now(), from: t.from || 'ef', file: t.file }).catch(function () {}); }
+function ttFromCloud(remote) {
+  const mine = ttRead();
+  if (!remote || !remote.file) { if (mine && mine.from !== 'gr-plan') ttCloudPush(mine); return; }
+  if (mine && (mine.at || 0) >= (remote.at || 0)) { if ((mine.at || 0) > (remote.at || 0)) ttCloudPush(mine); return; }
+  try { localStorage.setItem(TT_KEY, JSON.stringify(remote)); } catch (e) { /* αγνόησε */ }
   renderTT();
 }
 function ttWhen(t) {
@@ -3414,6 +3426,9 @@ async function fbSyncNow() {
         fbReady = true; fbUser = u; fbErr = '';
         if (fbUnsub) { fbUnsub(); fbUnsub = null; }
         fbRef = u ? db.collection('users').doc(u.uid).collection('efimeries').doc('data') : null;
+        if (ttCloudUnsub) { ttCloudUnsub(); ttCloudUnsub = null; }
+        ttCloudRef = u ? db.collection('users').doc(u.uid).collection('gr').doc('timetable') : null;
+        if (ttCloudRef) ttCloudUnsub = ttCloudRef.onSnapshot(function (s) { if (!s.metadata.hasPendingWrites) ttFromCloud(s.exists ? s.data() : null); }, function () {});
         renderFb();
         if (!u) return;
         fbSyncNow();
