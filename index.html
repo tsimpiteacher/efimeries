@@ -2,6 +2,7 @@
 <html lang="el">
 <head>
 <meta charset="utf-8">
+<script src="/suite-sync.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2F5D3A">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2460,6 +2461,7 @@ function renderExclusions() {
 function renderSyncBar() {
   const el = $('syncBar');
   if (!el) return;
+  if (window.SUITE_SYNC) { el.hidden = true; el.style.display = 'none'; return; }
   let ok = true, txt;
   if (typeof fbUser !== 'undefined' && fbUser) {
     ok = !fbErr;
@@ -3434,6 +3436,12 @@ const FB_CFG = { apiKey: 'AIzaSyCAdFnxdD4iFyBGLuSybAyUPOT9B0c4w-Q', authDomain: 
 var fbUser = null, fbRef = null, fbBusy = false, fbQueued = false, fbErr = '', fbLast = 0, fbUnsub = null, fbLastRemoteAt = 0, fbReady = false, fbArmed = null;
 function renderFb() {
   const b = $('fbBtn'), s = $('fbStatus');
+  if (window.SUITE_SYNC) {
+    if (b) { b.textContent = 'Συγχρονισμός συσκευών…'; b.className = 'btn btn-primary'; b.disabled = false; }
+    if (s) s.textContent = 'Γίνεται από το ☁ στην μπάρα, για όλη τη σουίτα μαζί.';
+    const bd = $('syncBadge'); if (bd) bd.textContent = '';
+    renderSyncBar(); return;
+  }
   if (b) { b.textContent = fbUser ? (fbArmed ? 'Πάτα ξανά για αποσύνδεση' : 'Αποσύνδεση') : 'Σύνδεση με Google'; b.className = 'btn ' + (fbUser ? 'btn-ghost' : 'btn-primary'); b.disabled = !fbReady; }
   if (s) s.innerHTML = !fbReady ? 'Έλεγχος σύνδεσης…'
     : !fbUser ? 'Δεν έχεις συνδεθεί σε αυτή τη συσκευή.'
@@ -3475,6 +3483,11 @@ async function fbSyncNow() {
   }
 }
 (function initFirebase() {
+  if (window.SUITE_SYNC) {   // ο κοινός συγχρονισμός της σουίτας (☁ στην μπάρα) κάνει πλέον όλη τη δουλειά
+    fbReady = true; renderFb();
+    const b = $('fbBtn'); if (b) b.addEventListener('click', () => window.SUITE_SYNC.open());
+    return;
+  }
   if (!location.protocol.startsWith('http')) { fbReady = true; renderFb(); return; }
   const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
   const load = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
