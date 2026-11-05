@@ -15,7 +15,7 @@
 <title>Πίνακας Εφημεριών</title>
 </head>
 <body>
-<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Συμπύκνωση ⇄ Εφημερίες ⇄ ΓΡ ⇄ Αναπληρώσεις (ίδιο κομμάτι σε όλες τις εφαρμογές) ===== -->
+<!-- ===== Μπάρα σουίτας: αρχική + εναλλαγή Συμπύκνωση ⇄ Εφημερίες ⇄ ΓΡ (ίδιο κομμάτι σε όλες τις εφαρμογές) ===== -->
 <nav class="sbar" id="suiteBar" data-app="ef" aria-label="Εφαρμογές">
   <a class="sbar-home" href="../" title="Όλες οι εφαρμογές">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
@@ -40,10 +40,6 @@
 <a class="sbar-opt gr" href="../gr/" data-to="gr">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M9 9v11.5M15 9v11.5"/></svg>
       <b class="sn">3</b><span>ΓΡ</span>
-    </a>
-<a class="sbar-opt an" href="../anaplirwseis/" data-to="an">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M16 7.5h5M18.5 5v5"/></svg>
-      <b class="sn">4</b><span class="l">Αναπληρώσεις</span><span class="s">Αναπλ.</span>
     </a>
   </div>
   <a class="sbar-next" id="sbarNext" href="../" hidden><span class="nl"></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
@@ -127,7 +123,7 @@
   try { localStorage.setItem('suite-last-app', app); } catch (e) { /* αγνόησε */ }
   // ---- Επόμενο βήμα της εβδομάδας: Συμπύκνωση → Εφημερίες → ΓΡ → Αναπληρώσεις → (αρχική: λήψη όλων) ----
   // Μια εφαρμογή μπορεί να ορίσει window.suiteNext(href) για να ετοιμάσει πρώτα κάτι (π.χ. η Συμπύκνωση το πρόγραμμα).
-  var NEXT = { sy: ['../efimeries/?from=sy', 'Επόμενο: Εφημερίες'], ef: ['../gr/?from=ef', 'Επόμενο: ΓΡ'], gr: ['../anaplirwseis/?from=gr', 'Επόμενο: Αναπληρώσεις'], an: ['../#week', 'Τέλος: Λήψη όλων'] };
+  var NEXT = { sy: ['../efimeries/?from=sy', 'Επόμενο: Εφημερίες'], ef: ['../gr/?from=ef', 'Επόμενο: ΓΡ'], gr: ['../#week', 'Τέλος: Λήψη όλων'] };
   var nx = document.getElementById('sbarNext');
   if (nx && NEXT[app]) {
     nx.href = NEXT[app][0]; nx.querySelector('.nl').textContent = NEXT[app][1]; nx.title = NEXT[app][1]; nx.hidden = false;
@@ -2244,9 +2240,11 @@ function handleFile(file, shared) {
         state.dayExclusions = {};
         state.dayExclusionsWeek = '';
       }
-      const oldAssign = state.assignments, oldWeek = state.week, hadModel = !!state.model;
+      const oldAssign = state.assignments, oldWeek = state.week, hadModel = !!state.model, oldDate = state.dateLabel;
       const wk = shared ? ttWeek(shared) : 0;
-      const keepOk = hadModel && wk && oldWeek === wk && !(shared && shared.newWeek && shared.from === 'hub' && oldWeek !== shared.at);
+      const hubNew = !!(shared && shared.newWeek && shared.from === 'hub' && oldWeek !== shared.at);
+      // ίδια εβδομάδα: ίδιο κοινό πρόγραμμα, ή διορθωμένο αρχείο με την ίδια ημερομηνία εβδομάδας
+      const keepOk = hadModel && !hubNew && ((wk && oldWeek === wk) || (model.dateLabel && model.dateLabel === oldDate));
       state.week = wk || ('u' + Date.now());
       if (shared) ttMarkUsed(shared.at); else ttShare(data, file.name);
       state.syInfo = shared && shared.from === 'sy' && shared.sy && Array.isArray(shared.sy.dayNames) && shared.sy.dayNames.length
@@ -2271,7 +2269,7 @@ function handleFile(file, shared) {
 
       renderSyInfo();
       revealMainUI();
-      setStatus((shared && shared.from !== 'ef' ? 'Ενημερώθηκε από ' + (TT_FROM[shared.from] || 'άλλη εφαρμογή') + '. ' : '') + 'Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.' + (rb && rb.kept ? ' Κρατήθηκαν οι εφημερίες (και οι αλλαγές σου) ' + rb.kept + ' ημερών· ξαναβγήκαν: ' + (rb.redone ? rb.redoDays.join(', ') : 'καμία') + '.' : '') + (clearedLeaves ? ' Οι άδειες της προηγούμενης εβδομάδας (' + clearedLeaves + ') μηδενίστηκαν.' : ''));
+      setStatus((shared && shared.from !== 'ef' ? 'Ενημερώθηκε από ' + (TT_FROM[shared.from] || 'άλλη εφαρμογή') + '. ' : '') + 'Έτοιμο. Έλεγξε τις τοποθετήσεις πριν τη λήψη.' + (rb ? ' Ίδια εβδομάδα: κρατήθηκαν οι εφημερίες που ισχύουν ακόμα' + (rb.changed ? ' · άλλαξαν ' + rb.changed + (rb.changed === 1 ? ' θέση' : ' θέσεις') + ' (' + rb.redoDays.join(', ') + ')' : ' · καμία αλλαγή') + '.' : '') + (clearedLeaves ? ' Οι άδειες της προηγούμενης εβδομάδας (' + clearedLeaves + ') μηδενίστηκαν.' : ''));
     } catch (err) {
       $('dzSub').textContent = 'Ανέβασε αρχείο προγράμματος (.xlsx)';
       $('parseStatus').innerHTML = '<div class="err">✗ ' + escapeAttr(err.message || String(err)) + '</div>';
@@ -2330,11 +2328,21 @@ function rebuildKeeping(old) {
   const keep = {};
   state.model.days.forEach(d => { if (old && old[d] && dayStillValid(d, old[d])) keep[d] = old[d]; });
   const n = Object.keys(keep).length;
-  if (!n) { runAssignmentsForAllDays(); return { kept: 0, redone: state.model.days.length }; }
+  if (!n && !(old && Object.keys(old).length)) { runAssignmentsForAllDays(); return { kept: 0, redone: state.model.days.length, redoDays: state.model.days, changed: 0 }; }
   state.assignments = Object.assign({}, keep);
   const redo = state.model.days.filter(d => !keep[d]);
-  redo.forEach(d => runAssignment(d));
-  return { kept: n, redone: redo.length, redoDays: redo };
+  // στις μέρες που άλλαξαν, όσοι εφημερεύοντες ισχύουν ακόμα μένουν· ξαναμπαίνουν μόνο οι θέσεις που χάλασαν
+  let changed = 0;
+  redo.forEach(d => {
+    const o = old && old[d];
+    if (!o || !Array.isArray(o.slotsA)) { runAssignment(d); return; }
+    const A1 = new Set(eligibleNamesFor(d, 'p1Room')), B6 = new Set(eligibleNamesFor(d, 'p6Room'));
+    const fa = o.slotsA.flat().filter(n => n && A1.has(n)), fb = o.slotsB.flat().filter(n => n && B6.has(n));
+    runAssignment(d, undefined, undefined, { A: fa, B: fb });
+    const was = new Set(o.slotsA.flat().concat(o.slotsB.flat()).filter(Boolean)), now = state.assignments[d];
+    now.slotsA.flat().concat(now.slotsB.flat()).filter(Boolean).forEach(n => { if (!was.has(n)) changed++; });
+  });
+  return { kept: n, redone: redo.length, redoDays: redo, changed: changed };
 }
 const escT = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 // Ήρθαμε από το κουμπί «Συνέχεια στις Εφημερίες» της Συμπύκνωσης: το πρόγραμμα φορτώνεται χωρίς ερώτηση.
