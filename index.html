@@ -721,6 +721,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
       Λήψη Word
     </button>
+    <button class="btn btn-ghost" id="downloadPlainBtn" type="button" title="Κατεβαίνει κατευθείαν στις Λήψεις του browser, χωρίς παράθυρο επιλογής φακέλου">Απλή λήψη</button>
   </div>
 
   <footer class="note">Η επεξεργασία του προγράμματος γίνεται τοπικά στον browser — τα ονόματα δεν αποστέλλονται πουθενά.</footer>
@@ -2566,15 +2567,36 @@ $('downloadBtn').addEventListener('click', async () => {
   const btn = $('downloadBtn');
   btn.disabled = true;
   setStatus('Δημιουργία εγγράφου…');
+  const hint = setTimeout(() => { if (btn.disabled) setStatus('Περιμένω την αποθήκευση… Αν δεν βλέπεις παράθυρο «Αποθήκευση ως», πάτα «Απλή λήψη».'); }, 5000);
   try {
     const { blob, filename } = await buildWordFile();
     const msg = await saveGeneratedFile(blob, filename);
+    clearTimeout(hint);
     let hm = '';
     if (!/ακυρώθηκε/.test(msg)) {
       try { hm = autoSaveHistory(); } catch (e) { hm = ''; }
       try { localStorage.setItem('suite-dl-ef', String(Date.now())); } catch (e) { /* αγνόησε */ }
     }
     setStatus(msg + (hm ? ' ' + hm : ''));
+  } catch (err) {
+    setStatus('Σφάλμα: ' + (err.message || String(err)));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* «Απλή λήψη»: κατεβαίνει κατευθείαν στις Λήψεις του browser (χωρίς παράθυρο επιλογής φακέλου) — δουλεύει και όταν το «Αποθήκευση ως» δεν εμφανίζεται. */
+$('downloadPlainBtn').addEventListener('click', async () => {
+  if (!state.model) { setStatus('Ανέβασε πρώτα ένα πρόγραμμα.'); return; }
+  const btn = $('downloadPlainBtn');
+  btn.disabled = true;
+  try {
+    const { blob, filename } = await buildWordFile();
+    fallbackDownload(blob, filename);
+    let hm = '';
+    try { hm = autoSaveHistory(); } catch (e) { hm = ''; }
+    try { localStorage.setItem('suite-dl-ef', String(Date.now())); } catch (e) { /* αγνόησε */ }
+    setStatus('Το αρχείο κατέβηκε στον φάκελο Λήψεις του browser (' + filename + ').' + (hm ? ' ' + hm : ''));
   } catch (err) {
     setStatus('Σφάλμα: ' + (err.message || String(err)));
   } finally {
