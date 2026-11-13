@@ -2522,6 +2522,7 @@ function fallbackDownload(blob, filename) {
  */
 async function saveWithPicker(blob, filename, pickerType) {
   if (typeof window.showSaveFilePicker !== 'function') return 'unsupported';
+  const t0 = Date.now();
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: filename,
@@ -2536,7 +2537,8 @@ async function saveWithPicker(blob, filename, pickerType) {
     await writable.close();
     return 'saved';
   } catch (err) {
-    if (err && err.name === 'AbortError') return 'cancelled';
+    // «ακύρωση» μέσα σε κλάσματα δευτερολέπτου = το παράθυρο δεν άνοιξε καν (συμβαίνει σε κάποια Chrome) → απλή λήψη
+    if (err && err.name === 'AbortError' && Date.now() - t0 > 700) return 'cancelled';
     return 'unsupported';
   }
 }
