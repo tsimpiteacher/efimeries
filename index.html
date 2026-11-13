@@ -721,7 +721,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>
       Λήψη Word
     </button>
-    <button class="btn btn-ghost" id="downloadPlainBtn" type="button" title="Κατεβαίνει κατευθείαν στις Λήψεις του browser, χωρίς παράθυρο επιλογής φακέλου">Απλή λήψη</button>
+    <button class="btn btn-ghost" id="downloadPlainBtn" type="button" hidden title="Κατεβαίνει κατευθείαν στις Λήψεις του browser, χωρίς παράθυρο επιλογής φακέλου">Απλή λήψη</button>
   </div>
 
   <footer class="note">Η επεξεργασία του προγράμματος γίνεται τοπικά στον browser — τα ονόματα δεν αποστέλλονται πουθενά.</footer>
@@ -2521,7 +2521,8 @@ function fallbackDownload(blob, filename) {
  * Returns 'saved' | 'cancelled' | 'unsupported'.
  */
 async function saveWithPicker(blob, filename, pickerType) {
-  if (typeof window.showSaveFilePicker !== 'function') return 'unsupported';
+  // Το «Αποθήκευση ως» του Chrome ακυρωνόταν μόνο του (σχολείο και σπίτι) → πάντα κανονική λήψη στις Λήψεις.
+  return 'unsupported';
   const t0 = Date.now();
   try {
     const handle = await window.showSaveFilePicker({
@@ -2561,7 +2562,7 @@ async function saveGeneratedFile(blob, filename, pickerType) {
   if (result === 'saved') return 'Το αρχείο αποθηκεύτηκε στον φάκελο που επέλεξες.';
   if (result === 'cancelled') return 'Η αποθήκευση ακυρώθηκε.';
   fallbackDownload(blob, filename);
-  return 'Το αρχείο κατέβηκε στον φάκελο λήψεων του browser (ο browser σου δεν υποστηρίζει επιλογή φακέλου).';
+  return 'Το αρχείο κατέβηκε στον φάκελο Λήψεις του browser (' + filename + ').';
 }
 
 $('downloadBtn').addEventListener('click', async () => {
@@ -2569,7 +2570,7 @@ $('downloadBtn').addEventListener('click', async () => {
   const btn = $('downloadBtn');
   btn.disabled = true;
   setStatus('Δημιουργία εγγράφου…');
-  const hint = setTimeout(() => { if (btn.disabled) setStatus('Περιμένω την αποθήκευση… Αν δεν βλέπεις παράθυρο «Αποθήκευση ως», πάτα «Απλή λήψη».'); }, 5000);
+  const hint = setTimeout(() => {}, 0);
   try {
     const { blob, filename } = await buildWordFile();
     const msg = await saveGeneratedFile(blob, filename);
