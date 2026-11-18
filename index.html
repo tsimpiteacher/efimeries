@@ -651,6 +651,16 @@
     </div>
 
     <div style="margin-top:18px;">
+      <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Ώρες βαρδιών</div>
+      <p class="sub" style="margin-top:0;">Ισχύουν για όλες τις ημέρες και για τις επόμενες εβδομάδες. Αν αλλάξεις την ώρα μιας συγκεκριμένης ημέρας μέσα στον πίνακα, αυτή η ημέρα κρατά τη δική της ώρα.</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <label class="field" style="flex:1 1 150px;"><span class="lbl">Α΄ βάρδια</span><input type="text" id="shiftTimeA" autocomplete="off" placeholder="08:00-10:55"></label>
+        <label class="field" style="flex:1 1 150px;"><span class="lbl">Β΄ βάρδια</span><input type="text" id="shiftTimeB" autocomplete="off" placeholder="11:40-14:15"></label>
+        <label class="field" style="flex:1 1 150px;"><span class="lbl">Β΄ βάρδια Παρασκευής</span><input type="text" id="shiftTimeFri" autocomplete="off" placeholder="11:40-14:15"></label>
+      </div>
+    </div>
+
+    <div style="margin-top:18px;">
       <div class="lbl" style="font-size:13px; font-weight:600; margin-bottom:8px;">Θέσεις εφημερίας &amp; αριθμός εκπαιδευτικών ανά βάρδια</div>
       <p class="sub" style="margin-top:0;">Σειρά προτεραιότητας στην αυτόματη τοποθέτηση: 1) ίση κατανομή του συνολικού αριθμού εφημεριών της εβδομάδας σε όλους (πρώτα αποφασίζεται ΠΟΙΟΣ κάνει εφημερία, ανεξαρτήτως αίθουσας) · 2) κανείς δεν μπαίνει και στις δύο βάρδιες την ίδια μέρα · 3) μόνο μετά, η αίθουσα διδασκαλίας αποφασίζει ΠΟΥ, όσο γίνεται: Γ1–Γ4, Β3, Β4 → 3ος όροφος, Α1–Α5, Β1 → ισόγειο ή 2ος όροφος, Ζευκιλής/Καλογήρου/ο,τι διδάσκει στο Β2 → ισόγειο. Αν χρειαστεί, κάποιος μπορεί να μπει σε θέση εκτός αίθουσάς του ώστε να μην χαλάσει η ισορροπία. Γι' αυτό οι τρεις παρακάτω θέσεις είναι σταθερές· μπορείς να αλλάξεις μόνο τον τίτλο ή τον αριθμό ατόμων ανά βάρδια.</p>
       <div style="overflow-x:auto;">
@@ -1284,6 +1294,7 @@ const state = {
     { label: 'ΑΝΑΠΛΗΡΩΣΗ', countA: 1, countB: 1 },
   ],
   dayTimes: {},          // dayName -> {a, b}
+  shiftTimes: { a: '08:00-10:55', b: '11:40-14:15', fri: '11:40-14:15' },   // προεπιλεγμένες ώρες βαρδιών (Πάγιες ρυθμίσεις)
   assignments: {},       // dayName -> {slotsA:[[..]], slotsB:[[..]], leftoverA:[], leftoverB:[]}
   footnote: DEFAULT_FOOTNOTE,
   priorCounts: null,     // Map(name -> count) imported from a previous week's exported stats, or null
@@ -1294,8 +1305,8 @@ const state = {
 const $ = (id) => document.getElementById(id);
 
 function defaultTimeFor(dayName) {
-  const isFri = normGr(dayName).indexOf('ΠΑΡΑΣΚ') === 0;
-  return { a: '08:00-10:55', b: isFri ? '11:40-13:30' : '11:40-14:15' };
+  const isFri = normGr(dayName).indexOf('ΠΑΡΑΣΚ') === 0, st = state.shiftTimes;
+  return { a: st.a, b: isFri ? (st.fri || st.b) : st.b };
 }
 
 /* Filename-safe date stamp for downloads. Prefers the «Περίοδος» label typed
@@ -1545,7 +1556,44 @@ function removeDayExclusion(day, name) {
    η τοποθέτηση καθορίζεται από την αίθουσα διδασκαλίας (βλ. assignDay) — ο
    πίνακας επιτρέπει μόνο επεξεργασία τίτλου/αριθμού ατόμων, όχι προσθήκη ή
    αφαίρεση γραμμών. */
+/* ---------- ώρες βαρδιών (Πάγιες ρυθμίσεις) ---------- */
+function retimeDays(oldSt, newSt) {
+  // Οι ημέρες που ακολουθούσαν την παλιά προεπιλογή παίρνουν τη νέα· όσες άλλαξαν χειροκίνητα μένουν ως έχουν.
+  const pick = (st, d) => (normGr(d).indexOf('ΠΑΡΑΣΚ') === 0 ? { a: st.a, b: st.fri || st.b } : { a: st.a, b: st.b });
+  [state.dayTimes || {}, customDayTimes].forEach(map => Object.keys(map).forEach(d => {
+    const t = map[d]; if (!t) return;
+    const od = pick(oldSt, d), nd = pick(newSt, d);
+    if (t.a === od.a) t.a = nd.a;
+    if (t.b === od.b) t.b = nd.b;
+  }));
+}
+function setShiftTimes(st) {
+  const old = state.shiftTimes;
+  if (old.a === st.a && old.b === st.b && old.fri === st.fri) return false;
+  retimeDays(old, st);
+  state.shiftTimes = st;
+  return true;
+}
+function renderShiftTimes() {
+  if (!$('shiftTimeA')) return;
+  $('shiftTimeA').value = state.shiftTimes.a;
+  $('shiftTimeB').value = state.shiftTimes.b;
+  $('shiftTimeFri').value = state.shiftTimes.fri || state.shiftTimes.b;
+}
+['shiftTimeA', 'shiftTimeB', 'shiftTimeFri'].forEach(id => $(id).addEventListener('change', () => {
+  const D = DEFAULT_SHIFT_TIMES, v = id => $(id).value.trim();
+  const b = v('shiftTimeB') || D.b;
+  const changed = setShiftTimes({ a: v('shiftTimeA') || D.a, b, fri: v('shiftTimeFri') || b });
+  renderShiftTimes();
+  if (changed) {
+    if (state.model) renderResults();
+    persistSettings(false);
+    setStatus('Άλλαξαν οι ώρες των βαρδιών για όλες τις ημέρες.');
+  }
+}));
+
 function renderPosTable() {
+  renderShiftTimes();
   const body = $('posTableBody');
   body.innerHTML = '';
   state.positions.forEach((p, i) => {
@@ -1666,6 +1714,7 @@ function buildSessionPayload() {
     maxDays: state.maxDays,
     positions: state.positions,
     dayTimes: state.dayTimes,
+    shiftTimes: state.shiftTimes,
     assignments: state.assignments,
     footnote: state.footnote,
     priorCounts: state.priorCounts ? Object.fromEntries(state.priorCounts) : null,
@@ -1692,6 +1741,8 @@ function applySessionPayload(data) {
   state.dayExclusionsWeek = typeof data.dayExclusionsWeek === 'string' ? data.dayExclusionsWeek : '';
   state.positions = Array.isArray(data.positions) && data.positions.length ? data.positions : state.positions;
   state.dayTimes = data.dayTimes || {};
+  // παλιά αποθηκευμένη εβδομάδα (πριν τις «Ώρες βαρδιών»): η παλιά προεπιλογή της Παρασκευής παίρνει τη σημερινή
+  if (!data.shiftTimes) Object.keys(state.dayTimes).forEach(d => { const t = state.dayTimes[d]; if (t && normGr(d).indexOf('ΠΑΡΑΣΚ') === 0 && t.b === '11:40-13:30') t.b = defaultTimeFor(d).b; });
   state.assignments = data.assignments || {};
   state.footnote = typeof data.footnote === 'string' ? data.footnote : DEFAULT_FOOTNOTE;
   state.priorCounts = null;
@@ -2997,6 +3048,7 @@ const SYNC_KEY = 'efimeries-sync-v1';
 const SYNC_FILE_TYPE = 'efimeries-sync-v1';
 const SYNC_PATH = 'efimeries-data.json';
 const DEFAULT_POSITIONS = JSON.parse(JSON.stringify(state.positions));
+const DEFAULT_SHIFT_TIMES = JSON.parse(JSON.stringify(state.shiftTimes));
 const INITIAL_RESULTS_HTML = $('results').innerHTML;
 const INITIAL_DZ_MAIN = $('dzMain').textContent;
 const INITIAL_DZ_SUB = $('dzSub').textContent;
@@ -3037,6 +3089,7 @@ function settingsSnapshot() {
     dayExclusionsWeek: state.dayExclusionsWeek || '',
     positions: state.positions,
     dayTimes: customDayTimes,
+    shiftTimes: state.shiftTimes,
     footnote: state.footnote,
     priorCounts: state.priorCounts ? Object.fromEntries(state.priorCounts) : null,
     priorMeta: state.priorMeta || null,
@@ -3067,6 +3120,9 @@ function applySettings(d) {
     state.positions = d.positions.map(p => ({ label: p.label, countA: Math.max(0, +p.countA), countB: Math.max(0, +p.countB) }));
   }
   if (typeof d.footnote === 'string') state.footnote = d.footnote;
+  if (d.shiftTimes && typeof d.shiftTimes === 'object' && typeof d.shiftTimes.a === 'string' && d.shiftTimes.a && typeof d.shiftTimes.b === 'string' && d.shiftTimes.b) {
+    setShiftTimes({ a: d.shiftTimes.a, b: d.shiftTimes.b, fri: (typeof d.shiftTimes.fri === 'string' && d.shiftTimes.fri) ? d.shiftTimes.fri : d.shiftTimes.b });
+  }
   if (d.dayTimes && typeof d.dayTimes === 'object') {
     customDayTimes = {};
     Object.keys(d.dayTimes).forEach(day => {
@@ -3191,6 +3247,7 @@ function resetEverything(alsoHistory) {
   state.dayExclusions = {};
   state.dayExclusionsWeek = '';
   state.positions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
+  state.shiftTimes = JSON.parse(JSON.stringify(DEFAULT_SHIFT_TIMES));
   state.footnote = DEFAULT_FOOTNOTE;
   state.priorCounts = null;
   state.priorMeta = null;
